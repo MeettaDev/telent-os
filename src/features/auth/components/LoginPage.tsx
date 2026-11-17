@@ -8,7 +8,7 @@ export function LoginPage() {
   const { dictionary } = useLocale();
 
   return (
-    <main className="grid min-h-dvh bg-[#f6f8f5] lg:grid-cols-[minmax(0,1fr)_minmax(32rem,0.82fr)] dark:bg-background">
+    <main className="grid min-h-dvh bg-background lg:grid-cols-[minmax(0,1fr)_minmax(32rem,0.82fr)]">
       <section className="relative hidden overflow-hidden bg-[#0d789f] p-12 text-white lg:flex lg:flex-col lg:justify-between xl:p-16">
         <div className="absolute -right-32 top-24 size-96 rounded-full border border-white/10" />
         <div className="absolute -bottom-48 -left-20 size-[34rem] rounded-full border border-white/10" />

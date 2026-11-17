@@ -1,59 +1,57 @@
 "use client";
 
-import { AppHeader } from "@/common/components/AppHeader";
+import { Plus, Search } from "lucide-react";
 import { AppSidebar } from "@/common/components/AppSidebar";
-import { useMockUser } from "@/common/auth/mock-auth";
+import { WorkspacePageHeader } from "@/common/components/WorkspacePageHeader";
 import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/typography";
+import { Input } from "@/components/ui/input";
 import { ActionQueue } from "@/features/dashboard/components/ActionQueue";
-import { CaseHealthPanel } from "@/features/dashboard/components/CaseHealthPanel";
-import { ConsultationsPanel } from "@/features/dashboard/components/ConsultationsPanel";
-import { QuickActionsPanel } from "@/features/dashboard/components/QuickActionsPanel";
+import { AppActivityPanel } from "@/features/dashboard/components/AppActivityPanel";
 import { SummaryMetrics } from "@/features/dashboard/components/SummaryMetrics";
+import { WaitingPanel } from "@/features/dashboard/components/WaitingPanel";
 import { useLocale } from "@/providers/locale-provider";
 
 export function MyWorkDashboard() {
-  const user = useMockUser();
   const { dictionary } = useLocale();
+  const t = dictionary.today;
 
   return (
-    <div className="flex min-h-dvh bg-[#f6f8f5] dark:bg-background">
+    <div className="flex min-h-dvh bg-background">
       <AppSidebar />
-      <div className="min-w-0 flex-1">
-        <AppHeader />
-        <main
-          id="main-content"
-          className="mx-auto max-w-full px-4 pb-12 pt-7 md:px-7 md:pb-14 md:pt-9 xl:px-8"
-        >
-          <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-start">
-            <div>
-              <Text as="h1" variant="page-title">
-                {dictionary.dashboard.title.replace(
-                  "{username}",
-                  user.username,
-                )}
-              </Text>
-              <Text variant="description" className="mt-1">
-                {dictionary.dashboard.description}
-              </Text>
-            </div>
-            <Button variant="outline" className="min-w-52 text-primary-hover">
-              {dictionary.dashboard.createCase}
-            </Button>
+      <main id="main-content" className="min-w-0 flex-1">
+        <WorkspacePageHeader
+          title={t.title}
+          description={t.description}
+          actions={
+            <>
+              <label className="relative min-w-0 basis-full sm:w-80 sm:flex-1 sm:basis-auto">
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-4 top-3 size-4 text-muted-foreground"
+                />
+                <span className="sr-only">{t.searchPlaceholder}</span>
+                <Input
+                  type="search"
+                  placeholder={t.searchPlaceholder}
+                  className="pl-10"
+                />
+              </label>
+              <Button type="button" className="w-full sm:w-auto">
+                <Plus aria-hidden="true" />
+                {t.addStudent}
+              </Button>
+            </>
+          }
+        />
+        <div className="space-y-5 px-4 pb-10 md:px-6 xl:px-8">
+          <SummaryMetrics dictionary={dictionary} />
+          <ActionQueue dictionary={dictionary} />
+          <div className="grid items-start gap-4 xl:grid-cols-2">
+            <WaitingPanel dictionary={dictionary} />
+            <AppActivityPanel dictionary={dictionary} />
           </div>
-          <div className="mt-8">
-            <SummaryMetrics dictionary={dictionary} />
-          </div>
-          <div className="mt-8 grid items-start gap-5 xl:grid-cols-[minmax(0,2.15fr)_minmax(19rem,1fr)]">
-            <ActionQueue dictionary={dictionary} />
-            <aside className="grid gap-5">
-              <ConsultationsPanel dictionary={dictionary} />
-              <CaseHealthPanel dictionary={dictionary} />
-              <QuickActionsPanel dictionary={dictionary} />
-            </aside>
-          </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

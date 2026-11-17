@@ -1,36 +1,65 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/providers/locale-provider";
 
 type PaginationProps = {
   currentPage: number;
-  nextLabel: string;
   onPageChange: (page: number) => void;
-  paginationLabel: string;
-  previousLabel: string;
+  tableLabel: string;
   totalPages: number;
 };
 
 type PageItem = number | "ellipsis-left" | "ellipsis-right";
 
+const PAGE_SIZE = 5;
+
+export function usePagination<T>(rows: readonly T[], resetKey = "") {
+  const [position, setPosition] = useState({ page: 1, resetKey });
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const currentPage =
+    position.resetKey === resetKey ? Math.min(position.page, totalPages) : 1;
+
+  if (currentPage !== position.page || resetKey !== position.resetKey) {
+    setPosition({ page: currentPage, resetKey });
+  }
+
+  const offset = (currentPage - 1) * PAGE_SIZE;
+  return {
+    offset,
+    pageRows: rows.slice(offset, offset + PAGE_SIZE),
+    pagination: {
+      currentPage,
+      totalPages,
+      onPageChange: (page: number) => setPosition({ page, resetKey }),
+    },
+  };
+}
+
 export function Pagination({
   currentPage,
-  nextLabel,
   onPageChange,
-  paginationLabel,
-  previousLabel,
+  tableLabel,
   totalPages,
 }: PaginationProps) {
+  const { dictionary } = useLocale();
+  const copy = dictionary.pagination;
+  if (totalPages <= 1) return null;
+
   const pages = getVisiblePages(currentPage, totalPages);
 
   return (
-    <nav aria-label={paginationLabel}>
-      <div className="flex items-center gap-1.5">
+    <nav
+      className="mt-4"
+      aria-label={copy.label.replace("{table}", tableLabel)}
+    >
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
         <PageArrow
           disabled={currentPage === 1}
-          label={previousLabel}
+          label={copy.previous}
           onClick={() => onPageChange(currentPage - 1)}
         >
           <ChevronLeft />
@@ -39,7 +68,7 @@ export function Pagination({
           typeof page === "number" ? (
             <button
               aria-current={page === currentPage ? "page" : undefined}
-              aria-label={`${paginationLabel} ${page}`}
+              aria-label={copy.page.replace("{page}", String(page))}
               className={cn(
                 "flex size-11 cursor-pointer items-center justify-center rounded-xl text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/25",
                 page === currentPage
@@ -64,7 +93,7 @@ export function Pagination({
         )}
         <PageArrow
           disabled={currentPage === totalPages}
-          label={nextLabel}
+          label={copy.next}
           onClick={() => onPageChange(currentPage + 1)}
         >
           <ChevronRight />

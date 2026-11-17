@@ -1,100 +1,107 @@
-import type { Dictionary } from "@/common/i18n/dictionaries";
+"use client";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/typography";
-import type { StudentDetail } from "@/features/students/types/student";
+import { WorkspacePageHeader } from "@/common/components/WorkspacePageHeader";
+import type { Student, StudentPlan } from "@/features/students/types/student";
+import type { StudentAction } from "@/features/students/components/StudentActionDialog";
+import { useLocale } from "@/providers/locale-provider";
+import { useStudentsStore } from "@/features/students/stores/students-store";
 
 export function StudentDetailHeader({
-  dictionary,
   student,
+  plan,
+  onAction,
 }: {
-  dictionary: Dictionary;
-  student: StudentDetail;
+  student: Student;
+  plan: StudentPlan;
+  onAction: (action: StudentAction) => void;
 }) {
-  const facts = [
-    [dictionary.studentDetail.caseOwner, student.caseOwner],
-    [dictionary.studentDetail.currentPhase, student.currentPhase],
-    [
-      dictionary.studentDetail.officialDeadline,
-      `${student.officialDeadline} · ${dictionary.studentDetail.days.replace("{count}", String(student.deadlineDays))}`,
-    ],
-  ];
-
+  const { dictionary } = useLocale();
+  const t = dictionary.studentWorkspace;
+  const history = useStudentsStore((state) => state.history[student.id]);
+  const confirmed = history?.some((entry) => entry.kind === "planConfirmed");
   return (
-    <>
-      <section className="surface grid gap-6 p-5 xl:grid-cols-[minmax(20rem,1.5fr)_2fr] xl:items-start">
-        <div className="flex gap-4">
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-tint text-sm font-semibold text-primary-hover">
-            {student.initials}
-          </span>
-          <div className="min-w-0">
-            <Text as="h1" variant="page-title" className="text-2xl">
-              {student.name}
-            </Text>
-            <Text variant="caption" className="mt-1">
-              {dictionary.studentDetail.studentId} · {student.id} ·{" "}
-              {student.location}
-            </Text>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full bg-red-50 px-3 py-1 text-[11px] font-semibold uppercase text-red-700">
-                {dictionary.studentDetail.deadlineRisk}
-              </span>
-              <span className="rounded-full bg-primary-tint px-3 py-1 text-[11px] font-semibold uppercase text-primary-hover">
-                {dictionary.students[student.support]}
-              </span>
-              <span className="rounded-full bg-primary-tint px-3 py-1 text-[11px] font-semibold uppercase text-primary-hover">
-                {dictionary.studentDetail.intake} · {student.intake}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div>
-          <dl className="grid gap-4 sm:grid-cols-3">
-            {facts.map(([label, value], index) => (
-              <div key={label}>
-                <dt className="text-[10px] font-semibold uppercase text-muted-foreground">
-                  {label}
-                </dt>
-                <dd
-                  className={`mt-2 text-sm font-semibold leading-[1.5] ${index === 2 ? "text-destructive" : "text-foreground"}`}
-                >
-                  {value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <div className="mt-5 flex flex-wrap justify-end gap-2">
-            <Button variant="outline" className="text-primary-hover">
-              {dictionary.studentDetail.messageStudent}
-            </Button>
-            <Button variant="app-primary">
-              {dictionary.studentDetail.createTask}
-            </Button>
-          </div>
-        </div>
-      </section>
-      <section className="surface mt-5 grid gap-5 p-5 sm:grid-cols-2 xl:grid-cols-5">
-        {[
-          [dictionary.studentDetail.currentMilestone, student.milestone],
-          [dictionary.studentDetail.nextAction, student.action],
-          [
-            dictionary.studentDetail.actionOwner,
-            `${student.owner ?? dictionary.students.ownerNA} · ${student.actor}`,
-          ],
-          [dictionary.studentDetail.due, student.dueTime],
-          [dictionary.studentDetail.blocker, student.blocker],
-        ].map(([label, value], index) => (
-          <div key={label}>
-            <Text variant="caption" className="font-semibold uppercase">
-              {label}
-            </Text>
-            <Text
-              className={`mt-2 font-semibold ${index === 1 ? "text-primary-hover" : index === 3 ? "text-destructive" : ""}`}
-            >
-              {value}
-            </Text>
-          </div>
-        ))}
-      </section>
-    </>
+    <WorkspacePageHeader
+      title={student.name}
+      avatar={
+        <span
+          aria-hidden="true"
+          className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-tint text-xl font-semibold text-primary-hover sm:size-14 sm:text-2xl"
+        >
+          {student.initials}
+        </span>
+      }
+      breadcrumbs={[
+        { label: t.breadcrumb, href: "/students" },
+        { label: student.name },
+      ]}
+      actions={
+        <>
+          <Button
+            type="button"
+            size="sm"
+            className="text-sm"
+            variant="outline"
+            onClick={() => onAction("message")}
+          >
+            {t.detail.message}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="text-sm"
+            variant="outline"
+            onClick={() => onAction("file")}
+          >
+            {t.detail.askFile}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="text-sm"
+            onClick={() => onAction("next")}
+          >
+            {t.detail.setNext}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+        <Badge
+          variant={plan.status === "confirmed" ? "success" : "tint"}
+          className="whitespace-nowrap px-2 text-sm leading-4"
+        >
+          {t.detail.planBadge
+            .replace("{version}", String(plan.version))
+            .replace(
+              "{status}",
+              plan.status === "confirmed" && !confirmed
+                ? t.detail.confirmedDate
+                : t.statuses[plan.status],
+            )}
+        </Badge>
+        <Badge
+          variant="tint"
+          className="whitespace-nowrap px-2 text-sm leading-4"
+        >
+          {t.contacts[student.contact]}
+        </Badge>
+        <Badge
+          variant="purple"
+          className="whitespace-nowrap px-2 text-sm leading-4"
+        >
+          {t.detail.studyOn}
+        </Badge>
+        {student.phone && (
+          <Badge
+            variant="secondary"
+            className="whitespace-nowrap px-2 text-sm leading-4"
+          >
+            {t.intake.channels[student.intake?.contactChannel ?? "viber"]}{" "}
+            {student.phone}
+          </Badge>
+        )}
+      </div>
+    </WorkspacePageHeader>
   );
 }

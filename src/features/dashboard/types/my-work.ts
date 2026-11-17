@@ -1,17 +1,17 @@
-export type QueueStatus = "actionable" | "dueSoon" | "overdue" | "scheduled";
-export type QueueItem = {
-  id: number;
-  initials: string;
-  title: string;
+import type { Dictionary } from "@/common/i18n/dictionaries";
+
+export type TodayTask = {
+  id: keyof Dictionary["today"]["tasks"];
   student: string;
-  category: string;
-  owner: string;
-  due: string;
-  status: QueueStatus;
+  actor: "meetta" | "noOne";
+  owner: "N" | "H" | null;
+  overdue?: boolean;
+  missingDate?: boolean;
+  primaryAction?: boolean;
 };
-export type Consultation = { time: string; student: string };
-export type CaseHealth = {
-  key: "onTrack" | "needsAttention" | "atRisk";
-  value: number;
-  width: string;
+
+export type TodayMetric = {
+  id: keyof Dictionary["today"]["metrics"];
+  count: number;
+  tone: "destructive" | "warning" | "primary";
 };

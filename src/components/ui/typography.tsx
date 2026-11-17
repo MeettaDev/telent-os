@@ -3,18 +3,18 @@ import type { ComponentPropsWithoutRef, ElementType } from "react";
 
 import { cn } from "@/lib/utils";
 
-const textVariants = cva("leading-[1.5]", {
+const textVariants = cva("leading-relaxed", {
   variants: {
     variant: {
       "page-title":
-        "text-[28px] font-semibold leading-[1.5] tracking-[-0.03em] text-foreground",
+        "text-3xl font-bold leading-tight tracking-tight text-foreground",
       "section-title":
-        "text-xl font-semibold leading-[1.5] tracking-[-0.02em] text-foreground",
-      "card-title": "text-base font-semibold leading-[1.5] text-foreground",
-      body: "text-sm leading-[1.6] text-foreground",
-      description: "text-sm leading-[1.6] text-muted-foreground",
-      caption: "text-xs leading-[1.5] text-muted-foreground",
-      error: "text-sm leading-[1.5] text-destructive",
+        "text-lg font-semibold leading-relaxed tracking-tight text-foreground",
+      "card-title": "text-base font-semibold leading-relaxed text-foreground",
+      body: "text-base leading-relaxed text-foreground",
+      description: "text-sm leading-relaxed text-muted-foreground",
+      caption: "text-sm leading-relaxed text-muted-foreground",
+      error: "text-sm leading-relaxed text-destructive",
     },
   },
   defaultVariants: { variant: "body" },

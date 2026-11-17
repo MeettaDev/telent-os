@@ -1,6 +1,7 @@
 {
   "appName": "meetta",
   "appTagline": "Journey OS",
+  "loadingPage": "Loading page…",
   "sidebar": {
     "workspace": "Counselor workspace",
     "assignedStudents": "42 assigned students",
@@ -24,7 +25,19 @@
     "close": "Close navigation",
     "profileMenu": "Open profile menu",
     "language": "Language",
-    "logout": "Log out"
+    "logout": "Log out",
+    "today": "Today",
+    "inbox": "Inbox",
+    "universities": "Universities",
+    "settings": "Settings",
+    "yangon": "Yangon",
+    "navigationDescription": "Choose a workspace page or change your language and theme in the profile menu."
+  },
+  "pagination": {
+    "label": "{table} pages",
+    "page": "Page {page}",
+    "previous": "Previous page",
+    "next": "Next page"
   },
   "students": {
     "searching": "Updating student search",
@@ -467,7 +480,7 @@
     "needsAttention": "Needs attention",
     "onTrack": "On track",
     "scopeNote": "Org scope: every case regardless of owner. This view shows the counselor column and all 82 cases.",
-    "showing": "Showing 1–{count} of 82 · select rows to reassign",
+    "showing": "Showing {start}–{end} of {total} · select rows to reassign",
     "noResults": "No students match this filter.",
     "placeholderDescription": "This admin workspace page is ready for its operational workflow."
   },
@@ -484,5 +497,863 @@
     },
     "backToDashboard": "Back to dashboard",
     "tryAgain": "Try again"
+  },
+  "today": {
+    "title": "Today",
+    "description": "Thu, 1 Oct 2026 · 7 things need you · sorted by what the app promised the student",
+    "searchPlaceholder": "Search a student, phone or NRC",
+    "addStudent": "Add student",
+    "summaryLabel": "Today’s summary",
+    "doFirst": "Do first",
+    "due": "Due",
+    "student": "Student",
+    "whatToDo": "What to do",
+    "whoseTurn": "Whose turn",
+    "onIt": "On it",
+    "action": "Action",
+    "meetta": "Meetta",
+    "noOne": "No one",
+    "claim": "Claim",
+    "ownerN": "Assigned to N",
+    "ownerH": "Assigned to H",
+    "metrics": {
+      "reviews": {
+        "label": "Reviews",
+        "hint": "1 past the 2-day promise"
+      },
+      "replies": {
+        "label": "Chat replies",
+        "hint": "oldest waiting 5h"
+      },
+      "consultations": {
+        "label": "Consultations",
+        "hint": "1 call today · 1 plan to write"
+      },
+      "noAction": {
+        "label": "No next action",
+        "hint": "set an owner and a date"
+      }
+    },
+    "tasks": {
+      "mofa": {
+        "due": "Overdue",
+        "dueNote": "Promised Sep 30",
+        "title": "Review MOFA papers · step 3 of 4",
+        "detail": "Resubmitted v2 · 3 papers",
+        "action": "Open review"
+      },
+      "nrc": {
+        "due": "Today 16:00",
+        "dueNote": "Promised Oct 3",
+        "title": "Review father’s NRC · Legalized papers step 1",
+        "detail": "Resent both sides · 9 of 10 OK",
+        "action": "Open review"
+      },
+      "call": {
+        "due": "Today 14:00",
+        "dueNote": "",
+        "title": "Consultation call · online",
+        "detail": "Booked via app · questions answered",
+        "action": "Open notes"
+      },
+      "contact": {
+        "due": "Today",
+        "dueNote": "",
+        "title": "First contact · new sign-up",
+        "detail": "From TikTok · Viber +95 9 ••• 771",
+        "action": "Call on Viber"
+      },
+      "chat": {
+        "due": "Today",
+        "dueNote": "waiting 5h",
+        "title": "Reply in Chat",
+        "detail": "“When do I register for TOPIK?”",
+        "action": "Reply"
+      },
+      "plan": {
+        "due": "Tomorrow",
+        "dueNote": "Promised Oct 02",
+        "title": "Write Your plan",
+        "detail": "Consultation Sep 30 · Kunjang or Busan",
+        "action": "Open plan"
+      },
+      "next": {
+        "due": "—",
+        "dueNote": "no date",
+        "title": "Set the next action",
+        "detail": "Plan confirmed Sep 24 · nothing scheduled",
+        "action": "Set next action"
+      }
+    },
+    "waiting": {
+      "title": "Waiting on others",
+      "breakdown": "University 3 · Office 2 · Student 5",
+      "note": "Every waiting item has a next check date. It moves up to “Do first” on that day.",
+      "items": {
+        "passport": {
+          "title": "Passport copy",
+          "detail": "student · due Oct 3",
+          "check": "Check Oct 3"
+        },
+        "university": {
+          "title": "University result",
+          "detail": "Kunjang",
+          "check": "Check Oct 20"
+        },
+        "tb": {
+          "title": "TB result",
+          "detail": "Nine Star Polyclinic",
+          "check": "Check Oct 2"
+        }
+      }
+    },
+    "activity": {
+      "title": "From the app · no action needed",
+      "yesterday": "Yesterday",
+      "note": "Student ticks never become Meetta approvals.",
+      "items": {
+        "topik": "{student} ticked “TOPIK registered”",
+        "bank": "{student} updated bank amount · 30M → 36M MMK",
+        "study": "{student} turned on Korean word study"
+      }
+    }
+  },
+  "inboxWorkspace": {
+    "description": "{count} students waiting for a reply · students always see “Meetta”",
+    "filterLabel": "Filter conversations",
+    "threadList": "Conversations",
+    "transcript": "Conversation messages",
+    "details": "Details",
+    "filters": {
+      "waiting": "Waiting",
+      "all": "All",
+      "mine": "Mine"
+    },
+    "openStudent": "Open student",
+    "back": "Back to conversations",
+    "compose": "Write in English or Burmese…",
+    "emptyFilter": "No conversations in this filter.",
+    "selectThread": "Select a conversation to open it.",
+    "actions": {
+      "file": "Ask for a file",
+      "call": "Book a call",
+      "guide": "Share a guide"
+    },
+    "fileRequest": {
+      "description": "Creates a task for the student and a card in Chat",
+      "whatFile": "1 · What file",
+      "fatherDetail": "Legalized papers · NRC copy",
+      "other": "Other file…",
+      "otherHint": "Enter a name, e.g. university certificate copy",
+      "fileName": "File name",
+      "alreadyOpen": "Already open. Sending this again updates the existing task with the new due date and message.",
+      "checklist": "2 · Checklist the student will tick",
+      "checklistVersion": "Checklist · v2",
+      "clear": "Clear, with all edges visible",
+      "colorCopy": "Color copy of the passport photo page",
+      "date": "3 · Due date",
+      "inDays": "In {days} days · {date}",
+      "pickDate": "Pick a date",
+      "message": "4 · Message (optional)",
+      "defaultMessage": "Please add the back side too. Put both sides on one page. A phone photo is fine.",
+      "preview": "Student preview · sender “Meetta”",
+      "previewTitle": "Add {file}",
+      "tapUpload": "Tap to upload",
+      "open": "Open",
+      "send": "Send to {student}",
+      "sent": "Sent",
+      "updated": "Task updated",
+      "documents": "Open Documents",
+      "confirmation": "Sent to {student} · task due {date}",
+      "undo": "Undo · 10s"
+    },
+    "templates": "Templates",
+    "consultation": "Consultation call",
+    "dueDate": "Due",
+    "callBooking": {
+      "description": "30-minute consultation · appears in Chat",
+      "how": "How",
+      "modes": {
+        "online": "Online · in the app",
+        "office": "At the Yangon office"
+      },
+      "locations": {
+        "online": "Online",
+        "office": "Yangon office"
+      },
+      "day": "Day",
+      "time": "Time (Yangon)",
+      "duration": "30 min",
+      "preview": "Student preview",
+      "booked": "Consultation booked",
+      "withHost": "with {host}",
+      "noTimes": "No times available. Choose another day.",
+      "slotUnavailable": "This time is no longer available. Choose another time or day.",
+      "send": "Send booking",
+      "confirmation": "Booking sent to {student}"
+    },
+    "guide": "Guide",
+    "invalidAction": "Choose a valid option and fill in all required fields.",
+    "times": {
+      "hours": "5h",
+      "yesterday": "Yesterday",
+      "sep30": "Sep 30"
+    },
+    "incoming": {
+      "may": "I sent my father’s NRC again, both sides.",
+      "ko": "When do I register for TOPIK?",
+      "thiri": "Is the call online or at the office?",
+      "phyu": "Can my mother’s account be used?",
+      "su": "The hospital says results on Friday."
+    },
+    "initialReply": "Hi May Zin! Your father’s NRC needs the back side too. Please add both sides on one page.",
+    "initialReplyMeta": "Meetta · Oct 1 08:40 · sent with the Fix",
+    "initialFile": "Father’s NRC · both sides",
+    "initialFileDetail": "Opens in the student app as a task · due Oct 5",
+    "received": "Father’s NRC v2 received · in Nway Nway’s review",
+    "guides": {
+      "passport": {
+        "title": "Passport copy guide",
+        "detail": "Scan the passport photo page in color. Keep all four corners visible."
+      },
+      "topik": {
+        "title": "TOPIK preparation guide",
+        "detail": "Check your target level and registration window before choosing a test date."
+      },
+      "consultation": {
+        "title": "Consultation preparation guide",
+        "detail": "Bring your questions, preferred intake, and any documents you already have."
+      }
+    },
+    "replies": [
+      {
+        "label": "Acknowledge receipt",
+        "text": "Thanks for sending this. We’ll review it and get back to you."
+      },
+      {
+        "label": "Follow up",
+        "text": "Hi! Do you have an update for us? Let us know if you need help."
+      },
+      {
+        "label": "Confirm next step",
+        "text": "Thanks for checking in. We’ll share your next step here."
+      }
+    ]
+  },
+  "universityWorkspace": {
+    "description": "Review university records, programs, and intake dates",
+    "search": "Search a university or program",
+    "add": "Add university",
+    "edit": "Edit (new version)",
+    "addProgram": "Add program",
+    "addDescription": "Create a university record for an intake.",
+    "nextVersion": "Save this update as record v{version}.",
+    "preview": "Review changes",
+    "saveVersion": "Save new version",
+    "recordPreview": "Saving creates the next record version.",
+    "back": "Back to edit",
+    "invalidRecord": "Check the required fields, application dates, and PDF link.",
+    "invalidProgram": "Enter a program name and a valid seat count.",
+    "duplicate": "A university with this name already exists.",
+    "duplicateProgram": "A program with this name already exists.",
+    "stale": "This record changed. Reload before trying again.",
+    "updated": "Record updated",
+    "created": "Record created",
+    "programAdded": "Program added",
+    "extraFields": "Dates, requirements, and contacts",
+    "filterLabel": "Filter universities",
+    "filters": {
+      "all": "All",
+      "hasStudents": "Has students",
+      "recheck": "Re-check due",
+      "draft": "Not posted / draft"
+    },
+    "columns": {
+      "school": "School",
+      "intake": "Intake",
+      "window": "Application window",
+      "topik": "TOPIK",
+      "bankProof": "Bank proof",
+      "checked": "Checked",
+      "students": "Students",
+      "program": "Program",
+      "visaLength": "Visa · Length",
+      "seats": "Seats",
+      "career": "Career link"
+    },
+    "statuses": {
+      "verified": "Verified",
+      "recheck": "Re-check due",
+      "draft": "Draft"
+    },
+    "until": "Until {date}",
+    "from": "From {date}",
+    "notPosted": "Not posted yet",
+    "pending": "Guideline pending",
+    "backupCount": "{count} backup",
+    "backup": "Backup choice",
+    "empty": "No universities match your search and filter.",
+    "fields": {
+      "name": "University name",
+      "city": "City",
+      "summary": "School or program notes",
+      "intake": "Intake month",
+      "opensOn": "Applications open",
+      "closesOn": "Applications close",
+      "applicationNote": "Application round or note",
+      "topik": "TOPIK",
+      "bankProof": "Bank proof",
+      "source": "Guideline source",
+      "guidelineUrl": "Guideline PDF URL",
+      "checkedOn": "Verified on"
+    },
+    "programFields": {
+      "name": "Program name",
+      "track": "Track",
+      "visa": "Visa",
+      "length": "Length",
+      "career": "Career link",
+      "seats": "Seats"
+    },
+    "milestones": {
+      "interview": "Interview",
+      "result": "Result",
+      "tuition": "Tuition deadline",
+      "certificate": "Certificate of Admission",
+      "orientation": "Orientation · start"
+    },
+    "requirements": {
+      "language": "TOPIK",
+      "bank": "Bank proof",
+      "documents": "Documents",
+      "legalization": "Legalization",
+      "fee": "Application fee"
+    },
+    "contacts": {
+      "office": "Office",
+      "channel": "Channel",
+      "lastContact": "Last contact"
+    },
+    "programCount": "Programs · {count}",
+    "programs": "Programs",
+    "noPrograms": "No programs yet.",
+    "noStudents": "No students linked to this university.",
+    "studentsTitle": "Students on this university · {count}",
+    "openPdf": "Open guideline PDF",
+    "noPdf": "Guideline PDF unavailable",
+    "source": "Source: {source}",
+    "recheckBy": "Re-check by {date}",
+    "version": "Record v{version}",
+    "datesTitle": "Dates for {intake} intake",
+    "journeyReference": "Journey date reference",
+    "journey": {
+      "window": "③ University application",
+      "interview": "③ Step 3",
+      "result": "③ Step 4",
+      "tuition": "③ Step 5",
+      "certificate": "Opens ④ Visa",
+      "orientation": "⑤ Arrival"
+    },
+    "dateNotice": "Changing a date creates record v{version}. Preview date changes and the {count} linked students before saving.",
+    "requirementsTitle": "Requirements",
+    "documentReference": "Student document reference",
+    "contactsTitle": "University contacts",
+    "internal": "Internal only",
+    "history": "Record history",
+    "noHistory": "No recorded changes yet."
+  },
+  "studentWorkspace": {
+    "intake": {
+      "intro": "Start with a name and a reachable contact. Save the student even if their route or Google email is not ready.",
+      "channel": "Intake channel",
+      "name": "Student name",
+      "reachableContact": "Reachable contact",
+      "contactChannel": "Contact channel",
+      "contactPerson": "Contact person",
+      "assignedTo": "Assigned to",
+      "referralSource": "How did they hear about Meetta? · optional",
+      "heardVia": "How they heard about Meetta",
+      "status": "Consultation status",
+      "scheduleHint": "Scheduled requires a consultation date and time before saving.",
+      "scheduledDate": "Consultation date",
+      "scheduledTime": "Consultation time · Yangon",
+      "completedTitle": "Record a completed consultation",
+      "completedIntro": "Keep the basic intake short. Add the outcome and next action without forcing a school or Google account.",
+      "editBasics": "Edit basic details",
+      "doneEditing": "Done editing",
+      "completedDate": "Completed on",
+      "outcome": "Outcome",
+      "goal": "Goal / target route",
+      "planStatus": "Plan status",
+      "planHint": "A draft is not a confirmed plan. Login never confirms a school or starts document approval.",
+      "nextAction": "Next action",
+      "dueDate": "Due date",
+      "pickDate": "Pick a date",
+      "clearDate": "Clear date",
+      "googleEmail": "Google email for app sign-in · optional",
+      "note": "Notes · optional",
+      "consultationNote": "Consultation note · optional",
+      "notePlaceholder": "Add a short note",
+      "emailHint": "Google email is optional. You can save now and add it later.",
+      "completedEmailHint": "No Google email is needed to save this consultation. The student can connect an account later.",
+      "checkRecords": "Check existing records",
+      "checking": "Checking…",
+      "noMatches": "No matching records found.",
+      "checkHint": "Save checks for possible matches again. A shared contact never proves that two records are the same student.",
+      "checkError": "Could not check existing records. Please try again.",
+      "accountNotice": "A student record is not a login account",
+      "accountNoticeDetail": "App terms and privacy choices are completed by the student in the app. This save does not confirm a plan or approve documents.",
+      "outcomeNotice": "Save the actual consultation outcome only",
+      "outcomeNoticeDetail": "App terms and privacy choices remain awaiting the student. A saved consultation does not automatically confirm a plan or approve documents.",
+      "save": "Save student",
+      "saveOutcome": "Save student & outcome",
+      "saving": "Saving…",
+      "matchTitle": "Check a possible existing record",
+      "matchIntro": "The contact you entered is already used on a student record. Check before creating another record.",
+      "matchWarning": "Possible match does not confirm identity",
+      "matchWarningDetail": "Family members may share a phone or Viber contact. Never merge records or expose app access automatically.",
+      "recordId": "Student {id}",
+      "existingHistory": "Previous web / staff-assisted history is kept on this record.",
+      "openExisting": "Open existing record",
+      "differentStudent": "Is this a different student?",
+      "separateIntro": "Create a separate record for {name} only after checking who uses this contact. Keep the existing student's history unchanged.",
+      "newStudent": "the new student",
+      "separateReason": "Reason for a separate record · required",
+      "reasonPlaceholder": "Explain why this is a different student",
+      "reasonHint": "A reason is required before “Save as new student” becomes available.",
+      "saveSeparate": "Save as new student",
+      "separateHint": "No merge, account link, consent, plan confirmation or document approval is performed by this screen.",
+      "notProvided": "Not provided",
+      "notDecided": "Not decided",
+      "channels": {
+        "phone": "Phone",
+        "office": "Office visit",
+        "viber": "Viber",
+        "facebook": "Facebook",
+        "referral": "Referral",
+        "other": "Other",
+        "tiktok": "TikTok",
+        "website": "Website"
+      },
+      "people": {
+        "student": "Student",
+        "guardian": "Guardian"
+      },
+      "statuses": {
+        "inquiry": "Inquiry only",
+        "scheduled": "Scheduled",
+        "completed": "Completed"
+      },
+      "errors": {
+        "required": "This field is required.",
+        "invalidDate": "Enter a valid date.",
+        "pastDueDate": "Choose today or a later date.",
+        "invalidTime": "Enter a valid time.",
+        "invalidEmail": "Enter a valid email address.",
+        "invalidPhone": "Enter a Myanmar mobile number in +959 or 09 format."
+      }
+    },
+    "title": "Students",
+    "description": "24 on a route · sorted by whose turn it is",
+    "search": "Search a student, phone or NRC",
+    "addStudent": "Add student",
+    "all": "All",
+    "meetta": "Meetta",
+    "student": "Student",
+    "office": "Office",
+    "noOne": "No one",
+    "today": "Today",
+    "noDate": "No date",
+    "empty": "No students match this search or filter.",
+    "breadcrumb": "Students",
+    "action": "Action",
+    "journeyLabel": "Step {step} of 6",
+    "saved": "Saved in this browser",
+    "saveError": "Could not save changes in this browser. Please try again.",
+    "cancel": "Cancel",
+    "close": "Close",
+    "required": "Complete the required fields.",
+    "owner": "Owner",
+    "nextCheck": "Next check",
+    "filters": {
+      "all": "All",
+      "meetta": "Meetta’s turn",
+      "student": "Student’s turn",
+      "office": "Waiting on an office",
+      "noOne": "No next action"
+    },
+    "columns": {
+      "student": "Student",
+      "school": "School · start",
+      "journey": "Journey",
+      "now": "Now",
+      "turn": "Whose turn",
+      "nextCheck": "Next check",
+      "owner": "Owner"
+    },
+    "contacts": {
+      "viber": "Viber linked",
+      "recent2h": "App active 2h ago",
+      "today": "App active today",
+      "yesterday": "App active 1d ago",
+      "recent3h": "App active 3h ago",
+      "recent6d": "App active 6d ago",
+      "notLinked": "Not signed in",
+      "new": "Not linked yet"
+    },
+    "now": {
+      "mofa": {
+        "title": "MOFA papers v2 · step 3",
+        "detail": "2 days over promise"
+      },
+      "nrc": {
+        "title": "Father’s NRC resent",
+        "detail": "Legalized papers step 1"
+      },
+      "plan": {
+        "title": "Write Your plan",
+        "detail": "Consultation done Sep 30"
+      },
+      "tb": {
+        "title": "TB test",
+        "detail": "Hospital result pending"
+      },
+      "topik": {
+        "title": "TOPIK registration",
+        "detail": "Ticked today"
+      },
+      "bank": {
+        "title": "Bank: saving",
+        "detail": "Reported 22M of 48M · Sep 20"
+      },
+      "none": {
+        "title": "—",
+        "detail": "Plan confirmed · nothing scheduled"
+      },
+      "documentsApproved": {
+        "title": "Documents approved",
+        "detail": "Set the next action and check date"
+      },
+      "fixRequested": {
+        "title": "Document changes requested",
+        "detail": "Waiting for the student to resend"
+      },
+      "planSent": {
+        "title": "Plan sent to confirm",
+        "detail": "Waiting for the student"
+      },
+      "planConfirmed": {
+        "title": "Plan confirmed",
+        "detail": "Ready for the Documents step"
+      },
+      "planChangeRequested": {
+        "title": "Plan change requested",
+        "detail": "Review the student’s feedback"
+      },
+      "custom": {
+        "title": "Next action",
+        "detail": "Scheduled follow-up"
+      }
+    },
+    "stages": {
+      "consultation": "Consultation",
+      "documents": "Documents",
+      "application": "University application",
+      "visa": "Visa",
+      "arrival": "Arrival",
+      "career": "Study & career"
+    },
+    "stageNotes": {
+      "consultation": "Done · Sep 25",
+      "documents": "Now · by Dec 15",
+      "application": "by Jan 15",
+      "visa": "Feb 15",
+      "arrival": "Mar 2",
+      "career": ""
+    },
+    "statuses": {
+      "draft": "Draft",
+      "sent": "Sent · to confirm",
+      "confirmed": "Confirmed",
+      "changeRequested": "Change requested",
+      "checking": "Checking",
+      "toSend": "To send",
+      "approved": "Approved",
+      "longTerm": "Long-term",
+      "fix": "Changes requested"
+    },
+    "detail": {
+      "planBadge": "Plan v{version} · {status}",
+      "confirmedDate": "confirmed Sep 26",
+      "studyOn": "Korean word study on",
+      "notLinked": "App not linked",
+      "message": "Message",
+      "askFile": "Ask for a file",
+      "setNext": "Set next action",
+      "editNext": "Edit next action",
+      "now": "Now",
+      "due": "Due",
+      "promise": "2-day promise",
+      "reviewTitle": "Review father’s NRC — resent with both sides",
+      "reviewDetail": "Legalized papers · step 1 of 4 · 9 of 10 papers OK · reviewer Nway Nway",
+      "openReview": "Open review",
+      "documents": "Documents",
+      "approvedCount": "{approved} of {total} approved",
+      "fromPlan": "Built from the plan · not a fixed list",
+      "document": "Document",
+      "appShows": "App shows",
+      "goals": "Long-term goals",
+      "goalsNote": "Final certificates fill the 2 rows above · no duplicate tasks",
+      "topikGoal": "TOPIK Level 2",
+      "checkOct7": "Next check-in Oct 7",
+      "checkOct9": "Next check-in Oct 9",
+      "topikNote": "Register by Oct 14 · test Nov 15 · student ticks each step",
+      "bankGoal": "Bank balance · 48M MMK",
+      "bankNote": "Student reported 30M of 48M · Sep 26 (father’s account). Typed by the student — Meetta never connects to the bank. Only staff see this number.",
+      "yourPlan": "Your plan",
+      "editPlan": "Edit (new version)",
+      "writePlan": "Write plan",
+      "school": "School",
+      "program": "Program",
+      "start": "Start",
+      "topik": "TOPIK",
+      "backup": "Backup",
+      "switchIf": "Switch if",
+      "status": "Status",
+      "confirmedBy": "Confirmed by {student} · {date}",
+      "people": "People",
+      "caseOwner": "Case owner · consultation, plan, chat",
+      "reviewer": "Reviewer · document decisions",
+      "chat": "Meetta Chat",
+      "unread": "1 unread",
+      "chatQuote": "I sent my father’s NRC again, both sides.",
+      "chatMeta": "students always see “Meetta”",
+      "openConversation": "Open conversation",
+      "noMessages": "No messages yet.",
+      "services": "Optional services",
+      "paidOutside": "Paid outside the app",
+      "asked": "Asked",
+      "serviceRequest": "English translation · 10 papers",
+      "serviceStatus": "Quote sent on Viber · Oct 1",
+      "history": "History",
+      "historyNote": "Full activity history",
+      "december": "Dec",
+      "view": "View",
+      "remind": "Remind",
+      "request": "Request"
+    },
+    "documents": {
+      "legalized": {
+        "title": "Legalized papers",
+        "detail": "10 papers · step 1 of 4 · father’s NRC resent"
+      },
+      "passport": {
+        "title": "Passport copy (color)",
+        "detail": "Not sent yet · student ticked 0 of 4"
+      },
+      "photo": {
+        "title": "Photo × 2",
+        "detail": "Sent Sep 30 · v1"
+      },
+      "application": {
+        "title": "Application form",
+        "detail": "v1 · approved by Hsu Wai"
+      },
+      "topik": {
+        "title": "TOPIK certificate",
+        "detail": "Fills from the TOPIK goal (below)"
+      },
+      "bank": {
+        "title": "Bank balance certificate",
+        "detail": "Fills from the bank goal (below)"
+      }
+    },
+    "goalSteps": {
+      "study": "Study",
+      "register": "Register",
+      "test": "Test",
+      "score": "Score",
+      "upload": "Upload",
+      "plan": "Plan",
+      "save": "Save",
+      "hold": "Hold",
+      "certificate": "Certificate"
+    },
+    "history": {
+      "reviewApproved": "Paper approved",
+      "reviewFix": "Paper sent back for changes",
+      "planSaved": "Plan draft saved",
+      "planSent": "Plan sent to student",
+      "planConfirmed": "Plan confirmed by student",
+      "planChangeRequested": "Student requested a plan change",
+      "studentAdded": "Student added",
+      "messageSent": "Message sent",
+      "fileRequested": "File requested",
+      "nextActionSet": "Next action set"
+    },
+    "initialHistory": {
+      "fix": "Legalized papers step 1 · father’s NRC sent back (Fix)",
+      "resent": "Father’s NRC resent · v2",
+      "photo": "Photo × 2 sent",
+      "application": "Application form approved",
+      "plan": "Plan v1 confirmed by May Zin",
+      "consultation": "Consultation · online · Hsu Wai"
+    },
+    "forms": {
+      "name": "Student name",
+      "phone": "Phone / Viber",
+      "university": "University",
+      "start": "Start month",
+      "create": "Add student",
+      "turn": "Whose turn",
+      "nextAction": "Next action",
+      "date": "Next check date",
+      "message": "Message",
+      "send": "Send message",
+      "file": "Document",
+      "note": "Note",
+      "requestFile": "Request file",
+      "changeReason": "What should change?",
+      "submitChange": "Request change",
+      "optional": "Optional",
+      "noOwner": "Unassigned",
+      "ownerNeeded": "Choose an owner for Meetta’s turn."
+    },
+    "review": {
+      "title": "Review",
+      "step": "Legalized papers · step 1",
+      "subtitle": "Legalized papers · step 1 of 4 (Originals + copies) · upload v2 · received Oct 1 09:12",
+      "answerBy": "Answer by Oct 3 · 2-day promise",
+      "reviewing": "You are reviewing · others see it",
+      "paperCount": "{total} papers · {approved} OK",
+      "new": "new",
+      "ok": "OK",
+      "fix": "Fix",
+      "onePage": "1 page",
+      "compare": "Compare with v1",
+      "hideCompare": "Hide comparison",
+      "previous": "Previous · v1",
+      "current": "Current · v2",
+      "front": "NRC · front",
+      "back": "NRC · back",
+      "missingBackPreview": "Back side missing in v1",
+      "preview": "Document preview",
+      "zoom": "Zoom document",
+      "rotate": "Rotate document",
+      "checklist": "Check · same list as the app",
+      "studentChecked": "Student ticked 3 of 3",
+      "decision": "Decision",
+      "approve": "Approve this paper",
+      "askFix": "Ask to fix",
+      "reasonsTitle": "If you ask to fix",
+      "reasonRequired": "Reason is required",
+      "studentSees": "{student} will see",
+      "sentBack": "Meetta sent this back",
+      "note": "Add a note for the student",
+      "reasonPlaceholder": "Explain what needs to change…",
+      "approveError": "Mark every check OK before approving.",
+      "awaitingUpload": "Waiting for the student to upload this document before review.",
+      "fixError": "Choose a reason or write a note before asking for a fix.",
+      "approvedToast": "Paper approved",
+      "fixToast": "Changes requested",
+      "approvedMessage": "This paper is approved.",
+      "fixPreview": "{paper}: {reason}",
+      "fixDialog": {
+        "title": "Send {paper} back to {student}?",
+        "reason": "Reason · required",
+        "other": "Other…",
+        "message": "Message · edit the template",
+        "language": "Message language",
+        "effects": "What happens",
+        "app": "App",
+        "appDetail": "{group} is marked “Needs a fix”. {paper} is marked “Fix”.",
+        "chat": "Chat",
+        "chatDetail": "Meetta posts a correction request with your message.",
+        "otherPapers": "Other papers",
+        "otherPapersDetail": "{count} approved papers keep their approval.",
+        "clock": "Clock",
+        "clockDetail": "Review pauses while waiting for v{version}.",
+        "nextCheck": "Next check",
+        "audit": "Recorded with your name, time, and file v{version}.",
+        "send": "Send back",
+        "unavailable": "This upload has changed or was already sent back. Close the dialog and check its status."
+      },
+      "checks": {
+        "names": "Names match the NRC on every paper",
+        "clear": "Clear photo of each original",
+        "sides": "Both sides on one page"
+      },
+      "reasons": {
+        "missingBack": "Back side missing",
+        "blurry": "Blurry",
+        "nameMismatch": "Name doesn’t match",
+        "wrongPaper": "Wrong paper",
+        "cutOff": "Cut off"
+      },
+      "reasonDetails": {
+        "missingBack": "The back side is missing. Please add both sides on one page.",
+        "blurry": "Please send a clear, sharp photo.",
+        "nameMismatch": "Please check that the name matches the NRC.",
+        "wrongPaper": "Please send the requested paper.",
+        "cutOff": "Please include every edge of the paper."
+      },
+      "papers": {
+        "fatherNrc": "Father’s NRC",
+        "yourNrc": "Your NRC",
+        "motherNrc": "Mother’s NRC",
+        "household": "Household list (Form 66)",
+        "birth": "Birth certificate",
+        "matriculation": "Matriculation certificate",
+        "marks": "Matriculation marks",
+        "relation": "Family relation letter",
+        "income": "Father’s income certificate",
+        "employment": "Father’s employment letter",
+        "legalized": "Legalized papers",
+        "passport": "Passport copy",
+        "photo": "Photo × 2",
+        "application": "Application form",
+        "topik": "TOPIK certificate",
+        "bank": "Bank balance certificate"
+      }
+    },
+    "plan": {
+      "title": "Your plan",
+      "draft": "draft",
+      "description": "Consultation Sep 30 · online · Hsu Wai · the student sees “Hsu Wai is preparing it” until you send",
+      "toConfirm": "To confirm",
+      "finalStatus": "Confirmed / Change requested",
+      "route": "Route",
+      "fromUniversity": "From the Universities record",
+      "university": "University",
+      "verified": "Verified",
+      "program": "Program · visa",
+      "schedule": "Start · apply by",
+      "topik": "TOPIK needed",
+      "whyTitle": "Why this route · what if",
+      "studentReads": "The student reads this in the app",
+      "why": "Why this route (2–3 lines)",
+      "backup": "Backup university",
+      "switchIf": "Switch to backup if",
+      "note": "Note to the student",
+      "defaultWhy": "• You can apply with TOPIK 2\n• Root-industry program with job links in Jeonbuk\n• Bank proof 48M MMK fits your family plan",
+      "defaultSwitch": "No TOPIK 2 by the December result",
+      "defaultNote": "Start your passport copy this week — it opens your Documents step.",
+      "previewTitle": "What the student sees",
+      "consultation": "Consultation",
+      "whyRoute": "Why this route",
+      "previewSchedule": "Start Mar 2027 · Apply by Jan 15 · TOPIK 2",
+      "confirm": "Confirm my plan",
+      "requestChange": "Request a change",
+      "save": "Save draft",
+      "send": "Send to {student}",
+      "edit": "Edit new version",
+      "sendFirst": "Send the plan to enable confirmation.",
+      "saved": "Draft saved",
+      "sent": "Plan sent to student",
+      "confirmed": "Plan confirmed",
+      "changeRequested": "Change requested",
+      "sendError": "Complete university, program, start/apply-by, TOPIK, and why this route before sending.",
+      "changeError": "Explain the change you need."
+    }
   }
 }

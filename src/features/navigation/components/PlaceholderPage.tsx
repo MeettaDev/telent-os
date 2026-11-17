@@ -17,13 +17,10 @@ export function PlaceholderPage({ titleKey }: { titleKey: SidebarTitleKey }) {
   );
 
   return (
-    <div className="flex min-h-dvh bg-[#f6f8f5] dark:bg-background">
+    <div className="flex min-h-dvh bg-background">
       <AppSidebar />
-      <main
-        id="main-content"
-        className="min-w-0 flex-1 px-4 py-7 md:px-7 md:py-9 xl:px-8"
-      >
-        <div className="mx-auto max-w-[1480px]">
+      <main id="main-content" className="min-w-0 flex-1 p-4 md:p-6 xl:p-8">
+        <div className="mx-auto max-w-7xl">
           <div className="flex items-center gap-3">
             <button
               aria-label={dictionary.sidebar.open}

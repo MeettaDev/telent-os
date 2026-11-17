@@ -1,8 +1,12 @@
 @import "tailwindcss";
-@import "tw-animate-css"; 
+@import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+
+@utility workspace-title-size {
+  font-size: 26px;
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -18,6 +22,15 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-destructive: var(--destructive);
+  --color-destructive-tint: var(--destructive-tint);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-overdue: var(--overdue);
+  --color-warning: var(--warning);
+  --color-secondary: var(--muted);
+  --color-secondary-foreground: var(--foreground);
+  --color-accent: var(--primary-tint);
+  --color-accent-foreground: var(--primary-hover);
+  --color-ring: var(--primary);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -25,20 +38,24 @@
 }
 
 :root {
-  --background: #f6f8fa;
-  --foreground: #172033;
+  --background: #f4f8fb;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #172033;
-  --muted: #f0f4f6;
-  --muted-foreground: #667085;
-  --primary: #1aa2d5;
-  --primary-hover: #1487b9;
-  --primary-tint: #eaf8ff;
+  --card-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --primary: #16a3d1;
+  --primary-hover: #0c789f;
+  --primary-tint: #dff2fb;
   --primary-foreground: #ffffff;
-  --border: #d9ddd6;
-  --input: #cfd6dc;
-  --destructive: #c93838;
-  --chart-1: #1aa2d5;
+  --border: #d8e2ed;
+  --input: #d8e2ed;
+  --destructive: #c52626;
+  --destructive-tint: #ffe2e3;
+  --destructive-foreground: #891d1d;
+  --overdue: #fff7f7;
+  --warning: #a65a00;
+  --chart-1: #16a3d1;
   --chart-2: #54b690;
   --chart-3: #f2b84b;
 }
@@ -51,8 +68,14 @@
   --muted: #222d35;
   --muted-foreground: #a7b3bc;
   --primary-tint: #143646;
+  --primary-hover: #73d5f3;
   --border: #34434b;
   --input: #41525c;
+  --destructive: #ff9a9a;
+  --destructive-tint: #42242c;
+  --destructive-foreground: #ffc1c1;
+  --overdue: #2d2029;
+  --warning: #f6bf68;
 }
 
 @layer base {
@@ -83,7 +106,7 @@
 
 @layer utilities {
   .surface {
-    @apply rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(23,32,51,0.025)];
+    @apply rounded-2xl border border-border bg-card;
   }
 }
 
