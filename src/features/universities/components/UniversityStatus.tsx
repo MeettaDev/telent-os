@@ -24,17 +24,19 @@ export function applicationWindow(
   labels: { from: string; until: string; notPosted: string },
   compact = false,
 ) {
-  const date = (value: string) =>
-    universityDate(value, locale, compact ? "short" : "full");
   let window = labels.notPosted;
   if (opensOn && closesOn) {
-    window = date(opensOn) + " – " + date(closesOn);
+    const style = compact ? "short" : "full";
+    window =
+      universityDate(opensOn, locale, style) +
+      " – " +
+      universityDate(closesOn, locale, style);
   } else if (closesOn) {
-    window = labels.until.replace("{date}", date(closesOn));
+    window = labels.until.replace("{date}", universityDate(closesOn, locale));
   } else if (opensOn) {
-    window = labels.from.replace("{date}", date(opensOn));
+    window = labels.from.replace("{date}", universityDate(opensOn, locale));
   }
-  return [applicationNote, window].filter(Boolean).join(" ");
+  return applicationNote ? `${window} (${applicationNote})` : window;
 }
 
 export function UniversityStatus({
@@ -50,18 +52,19 @@ export function UniversityStatus({
   const status = universityStatus(record, today);
   return (
     <Badge
+      className="rounded-full text-xs"
       variant={
         status === "verified"
           ? "success"
           : status === "recheck"
             ? "warning"
-            : "destructive"
+            : "secondary"
       }
     >
       {dictionary.universityWorkspace.statuses[status]}
       {includeDate &&
         record.checkedOn &&
-        " · " + universityDate(record.checkedOn, locale)}
+        " · " + universityDate(record.checkedOn, locale, "short")}
     </Badge>
   );
 }

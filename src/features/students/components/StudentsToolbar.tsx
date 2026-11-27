@@ -35,7 +35,7 @@ export function StudentsToolbar({
             aria-pressed={key === filter}
             onClick={() => onFilterChange(key)}
             className={cn(
-              "h-9 rounded-full px-4 text-sm",
+              "h-9.5 gap-1 rounded-full border-0 px-4 text-sm",
               key === filter
                 ? "border-foreground bg-foreground text-background hover:bg-foreground/90"
                 : "text-foreground/80",

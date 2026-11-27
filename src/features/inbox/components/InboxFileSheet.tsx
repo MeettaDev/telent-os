@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { File, TriangleAlert, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { TriangleAlert } from "lucide-react";
+import styles from "@/common/components/workspace.module.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,8 +41,8 @@ const options = {
   other: { document: null },
 } as const;
 
-const sectionLabel = "text-xs font-bold uppercase text-primary-hover";
-const selectedPill = "border-primary bg-primary-tint text-primary-hover";
+const sectionLabel = "text-xs font-bold uppercase text-muted-foreground";
+const selectedPill = "border-primary bg-primary-tint text-foreground";
 
 export function InboxFileSheet({
   student,
@@ -143,37 +143,28 @@ export function InboxFileSheet({
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg"
+        className={cn(
+          styles.palette,
+          "w-full border-0 sm:inset-y-8 sm:right-8 sm:h-auto sm:max-w-125 sm:rounded-3xl sm:shadow-2xl xl:[@media(min-height:66rem)]:top-20 xl:[@media(min-height:66rem)]:bottom-10",
+        )}
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           onRestoreFocus();
         }}
       >
-        <header className="flex shrink-0 items-start justify-between gap-3 border-b px-4 py-4 sm:px-6">
-          <div className="min-w-0">
-            <SheetTitle className="text-xl font-bold">
-              {t.actions.file}
-            </SheetTitle>
-            <SheetDescription className="mt-1 text-sm text-muted-foreground">
-              {student.name} · {f.description}
-            </SheetDescription>
-          </div>
-          <SheetClose asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={s.close}
-              className="size-8 shrink-0 rounded-full bg-muted"
-            >
-              <X aria-hidden="true" />
-            </Button>
-          </SheetClose>
+        <header className="shrink-0 px-5 pt-5 sm:px-7 sm:pt-7">
+          <SheetTitle className="text-[25px] leading-tight font-bold">
+            {t.actions.file}
+          </SheetTitle>
+          <SheetDescription className="sr-only">
+            {student.name} · {f.description}
+          </SheetDescription>
         </header>
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-4 sm:p-6">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7">
             <fieldset className="min-w-0">
               <legend className={sectionLabel}>{f.whatFile}</legend>
-              <div className="mt-2 divide-y overflow-hidden rounded-xl border">
+              <div className="mt-3 space-y-2">
                 {(Object.keys(options) as (keyof typeof options)[])
                   .filter((key) => may || key !== "father")
                   .map((key) => {
@@ -199,16 +190,15 @@ export function InboxFileSheet({
                       <label
                         key={key}
                         className={cn(
-                          "flex cursor-pointer items-center gap-3 px-3 py-2.5 hover:bg-muted",
-                          selected === key &&
-                            "bg-primary-tint/60 hover:bg-primary-tint/60",
+                          "relative flex cursor-pointer items-center gap-2 rounded-2xl border border-transparent bg-muted px-3.5 py-2.5 focus-within:ring-2 focus-within:ring-ring",
+                          selected === key && selectedPill,
                         )}
                       >
                         <input
                           type="radio"
                           name="file"
                           checked={selected === key}
-                          className="size-4 shrink-0 accent-primary"
+                          className="sr-only"
                           onChange={() => {
                             setSelected(key);
                             setDateChoice(undefined);
@@ -217,14 +207,23 @@ export function InboxFileSheet({
                           }}
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-semibold">
+                          <span
+                            className={cn(
+                              "block text-[15px] font-medium",
+                              selected === key && "font-semibold",
+                            )}
+                          >
                             {title}
                           </span>
                           <span className="block text-xs text-muted-foreground">
                             {detail}
                           </span>
                         </span>
-                        {status && <DocumentBadge status={status} />}
+                        {status && (
+                          <span className="shrink-0 [&_[data-slot=badge]]:rounded-full">
+                            <DocumentBadge status={status} />
+                          </span>
+                        )}
                       </label>
                     );
                   })}
@@ -240,7 +239,7 @@ export function InboxFileSheet({
                   onChange={(event) => setFileName(event.target.value)}
                 />
               )}
-              {(existing || seededOpen) && (
+              {existing && (
                 <div className="mt-2 flex items-start gap-2 rounded-lg bg-warning/15 p-3 text-xs leading-relaxed text-warning">
                   <TriangleAlert
                     className="size-4 shrink-0"
@@ -251,20 +250,15 @@ export function InboxFileSheet({
               )}
             </fieldset>
             <section aria-labelledby="file-checklist">
-              <div className="flex flex-wrap justify-between gap-1">
-                <h3 id="file-checklist" className={sectionLabel}>
-                  {f.checklist}
-                </h3>
-                <span className="text-xs text-muted-foreground">
-                  {f.checklistVersion}
-                </span>
-              </div>
-              <ul className="mt-2 space-y-1 rounded-xl bg-muted/60 px-3 py-2.5 text-sm">
+              <h3 id="file-checklist" className={sectionLabel}>
+                {f.checklist}
+              </h3>
+              <ul className="mt-3 space-y-1.5 text-sm">
                 {checklist.map((item) => (
-                  <li key={item} className="flex items-baseline gap-2">
+                  <li key={item} className="flex items-center gap-2.5">
                     <span
                       aria-hidden="true"
-                      className="size-3 shrink-0 rounded-sm border border-muted-foreground"
+                      className="size-4 shrink-0 rounded-sm border border-muted-foreground"
                     />
                     {item}
                   </li>
@@ -273,7 +267,7 @@ export function InboxFileSheet({
             </section>
             <fieldset className="min-w-0">
               <legend className={sectionLabel}>{f.date}</legend>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {[
                   ...dateOptions.map(({ key, date, days }) => ({
                     key,
@@ -289,7 +283,7 @@ export function InboxFileSheet({
                   <label
                     key={key}
                     className={cn(
-                      "cursor-pointer rounded-full border px-3 py-1.5 text-sm font-medium focus-within:ring-2 focus-within:ring-ring",
+                      "relative cursor-pointer rounded-full border border-transparent bg-muted px-3 py-2 text-sm font-medium text-muted-foreground focus-within:ring-2 focus-within:ring-ring",
                       choice === key && selectedPill,
                     )}
                   >
@@ -319,7 +313,7 @@ export function InboxFileSheet({
             <label className="block">
               <span className={sectionLabel}>{f.message}</span>
               <Textarea
-                className="mt-2 min-h-16 text-sm"
+                className="mt-3 min-h-17 rounded-2xl text-sm"
                 value={message}
                 maxLength={2000}
                 onChange={(event) => setNote(event.target.value)}
@@ -329,20 +323,19 @@ export function InboxFileSheet({
               <h3 id="file-preview" className={sectionLabel}>
                 {f.preview}
               </h3>
-              <div className="mt-2 flex flex-wrap items-center gap-3 rounded-xl border p-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-tint text-primary-hover">
-                  <File className="size-4" aria-hidden="true" />
-                </span>
+              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl bg-muted p-4">
                 <div className="min-w-0 flex-1 wrap-anywhere">
-                  <p className="text-sm font-semibold">
+                  <p className="font-semibold">
                     {f.previewTitle.replace("{file}", fileTitle)}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {dueDate && t.dueDate + " " + formatDate(dueDate) + " · "}
                     {f.tapUpload}
                   </p>
                 </div>
-                <Badge variant="secondary">{f.open} ›</Badge>
+                <span className="text-sm font-semibold text-primary-hover">
+                  {f.open} ›
+                </span>
               </div>
             </section>
             {error && (
@@ -351,15 +344,19 @@ export function InboxFileSheet({
               </p>
             )}
           </div>
-          <footer className="flex shrink-0 flex-wrap justify-end gap-2 border-t px-4 py-4 sm:px-6">
+          <footer className="mx-5 flex shrink-0 flex-wrap items-center justify-end gap-2.5 border-t py-4 sm:mx-7 sm:pb-6">
             <SheetClose asChild>
-              <Button type="button" variant="outline" className="text-sm">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-full border-primary px-5 text-sm text-foreground"
+              >
                 {s.cancel}
               </Button>
             </SheetClose>
             <Button
               type="submit"
-              className="h-auto min-h-10 whitespace-normal py-2 text-sm"
+              className="h-auto min-h-11 rounded-full px-6 py-2 text-lg whitespace-normal"
               disabled={!valid}
             >
               {f.send.replace("{student}", student.name)}

@@ -12,10 +12,15 @@ import {
 } from "@/features/students/mocks/students-data";
 import {
   findIntakeMatches,
+  intakeOwners,
+  studentContactSchema,
   studentIntakeFormSchema,
-  type StudentIntakeForm,
+  type StudentContact,
+  type StudentIntakeInput,
 } from "@/features/students/lib/student-intake";
 import {
+  consultationDuration,
+  consultationNextAction,
   isCallSlotTaken,
   planIsReady,
   reviewCanDecide,
@@ -23,6 +28,8 @@ import {
 } from "@/features/students/lib/student-workflow";
 import {
   dateSchema,
+  consultationBookingSchema,
+  consultationOutcomeSchema,
   messageActionSchema,
   studentSchema,
   storedWorkspaceSchema,
@@ -34,6 +41,8 @@ import {
   type MessageAction,
   type StudentMessage,
   type WorkspaceData,
+  type ConsultationBooking,
+  type ConsultationOutcome,
 } from "@/features/students/types/student";
 
 type FixRequest = {
@@ -48,11 +57,23 @@ type FileAction = Extract<MessageAction, { kind: "file" }>;
 
 type State = WorkspaceData & {
   hydrated: boolean;
-  addStudent: (student: Student) => void;
+  addStudent: (student: Student, author?: string) => void;
   createIntakeStudent: (
-    input: StudentIntakeForm,
+    input: StudentIntakeInput,
     reviewedIds?: string[],
+    author?: string,
   ) => { id: string } | { matches: Student[] };
+  bookConsultation: (
+    id: string,
+    values: ConsultationBooking,
+    author: string,
+    message: string,
+  ) => boolean;
+  recordConsultationOutcome: (
+    id: string,
+    result: ConsultationOutcome,
+  ) => boolean;
+  updateIntakeContact: (id: string, values: StudentContact) => boolean;
   setNextAction: (
     id: string,
     values: Pick<Student, "customAction" | "turn" | "nextCheck" | "owner">,
@@ -132,12 +153,32 @@ function event(kind: HistoryEvent["kind"], detail = ""): HistoryEvent {
   };
 }
 
-function appendHistory(state: State, id: string, entry: HistoryEvent) {
-  return { ...state.history, [id]: [entry, ...(state.history[id] ?? [])] };
+function appendHistory(state: State, id: string, ...entries: HistoryEvent[]) {
+  return { ...state.history, [id]: [...entries, ...(state.history[id] ?? [])] };
 }
 
 function appendMessage(state: State, id: string, message: StudentMessage) {
   return { ...state.messages, [id]: [...(state.messages[id] ?? []), message] };
+}
+
+function withStorageRollback(
+  get: () => State,
+  restore: (state: State) => void,
+  write: () => void,
+) {
+  const previous = get();
+  try {
+    write();
+  } catch (error) {
+    if (get() !== previous) {
+      try {
+        restore(previous);
+      } catch {
+        // Zustand restores memory before attempting to write to storage.
+      }
+    }
+    throw error;
+  }
 }
 
 export const useStudentsStore = create<State>()(
@@ -145,7 +186,198 @@ export const useStudentsStore = create<State>()(
     (set, get) => ({
       ...createWorkspace(),
       hydrated: false,
-      createIntakeStudent(input, reviewedIds = []) {
+      bookConsultation(id, input, author, message) {
+        const values = consultationBookingSchema.parse(input);
+        const state = get();
+        const student = state.students.find((item) => item.id === id);
+        if (!student?.intake || student.journeyStep !== 1) return false;
+        const current = student.intake.consultation;
+        if (current.status === "completed") return false;
+        const rescheduling = current.status === "scheduled";
+        const previousId = rescheduling ? current.messageId : undefined;
+        const host = intakeOwners[values.host];
+        if (
+          values.date <= yangonToday() ||
+          isCallSlotTaken(state.messages, id, host, values.date, values.time, {
+            duration: consultationDuration,
+            ignoreId: previousId,
+          })
+        )
+          return false;
+
+        const entry = event(
+          rescheduling ? "consultationRescheduled" : "consultationBooked",
+          values.date + " · " + values.time + " · " + host,
+        );
+        const messageId = previousId ?? entry.id;
+        const updated: Student = {
+          ...student,
+          now: "holdConsultation",
+          customAction: "",
+          nextCheck: values.date,
+          turn: "meetta",
+          owner: values.host,
+          intake: {
+            ...student.intake,
+            consultation: { status: "scheduled", ...values, messageId },
+          },
+        };
+        const booking: StudentMessage = {
+          id: messageId,
+          at: entry.at,
+          author,
+          text: message,
+          action: {
+            kind: "call",
+            date: values.date,
+            time: values.time,
+            booking: {
+              mode: values.mode,
+              host,
+              duration: consultationDuration,
+            },
+          },
+        };
+        withStorageRollback(
+          get,
+          (previous) => set(previous, true),
+          () =>
+            set({
+              students: state.students.map((item) =>
+                item.id === id ? updated : item,
+              ),
+              history: appendHistory(state, id, entry),
+              messages: {
+                ...state.messages,
+                [id]: [
+                  ...(state.messages[id] ?? []).filter(
+                    (item) => item.id !== previousId,
+                  ),
+                  booking,
+                ],
+              },
+            }),
+        );
+        return true;
+      },
+      recordConsultationOutcome(id, input) {
+        const result = consultationOutcomeSchema.parse(input);
+        const state = get();
+        const student = state.students.find((item) => item.id === id);
+        const scheduled = student?.intake?.consultation;
+        if (
+          !student?.intake ||
+          student.journeyStep !== 1 ||
+          scheduled?.status !== "scheduled" ||
+          result.date > yangonToday()
+        )
+          return false;
+        const { date, time, mode, host, messageId } = scheduled;
+        const appointment = { date, time, mode, host, messageId };
+        const plan = state.plans[id];
+        const details =
+          result.status === "completed"
+            ? [
+                {
+                  ...event("consultationOutcome", result.goal),
+                  consultationOutcome: result.outcome,
+                },
+                event("consultationCompleted", result.date),
+              ]
+            : [
+                event(
+                  result.status === "noShow"
+                    ? "consultationNoShow"
+                    : "consultationMoved",
+                  result.date,
+                ),
+              ];
+        const updated: Student = {
+          ...student,
+          ...consultationNextAction(result),
+          customAction: "",
+          intake: {
+            ...student.intake,
+            consultation: { ...result, appointment },
+          },
+        };
+        withStorageRollback(
+          get,
+          (previous) => set(previous, true),
+          () =>
+            set({
+              students: state.students.map((item) =>
+                item.id === id ? updated : item,
+              ),
+              history: appendHistory(state, id, ...details),
+              ...(result.status === "completed" &&
+                result.outcome === "ready" &&
+                plan?.status === "draft" &&
+                !plan.program &&
+                result.goal && {
+                  plans: {
+                    ...state.plans,
+                    [id]: { ...plan, program: result.goal },
+                  },
+                }),
+              ...(appointment.messageId &&
+                state.messages[id] && {
+                  messages: {
+                    ...state.messages,
+                    [id]: state.messages[id].map((item) => {
+                      const action = item.action;
+                      if (
+                        item.id !== appointment.messageId ||
+                        action?.kind !== "call" ||
+                        !action.booking
+                      )
+                        return item;
+                      return {
+                        ...item,
+                        action: {
+                          ...action,
+                          booking: { ...action.booking, status: result.status },
+                        },
+                      };
+                    }),
+                  },
+                }),
+            }),
+        );
+        return true;
+      },
+      updateIntakeContact(id, input) {
+        const { name, reachableContact, ...values } =
+          studentContactSchema.parse(input);
+        const state = get();
+        const student = state.students.find((item) => item.id === id);
+        if (!student?.intake) return false;
+        if (
+          !findIntakeMatches([student], reachableContact).length &&
+          findIntakeMatches(state.students, reachableContact).length
+        )
+          return false;
+        const updated: Student = {
+          ...student,
+          name,
+          initials: Array.from(name)[0].toUpperCase(),
+          phone: reachableContact,
+          intake: { ...student.intake, ...values },
+        };
+        withStorageRollback(
+          get,
+          (previous) => set(previous, true),
+          () =>
+            set({
+              students: state.students.map((item) =>
+                item.id === id ? updated : item,
+              ),
+              history: appendHistory(state, id, event("contactUpdated")),
+            }),
+        );
+        return true;
+      },
+      createIntakeStudent(input, reviewedIds = [], author) {
         const values = studentIntakeFormSchema.parse(input);
         const previous = get();
         const matches = findIntakeMatches(
@@ -175,50 +407,59 @@ export const useStudentsStore = create<State>()(
                   time: values.scheduledTime,
                 }
               : { status: values.status };
-        try {
-          previous.addStudent({
-            id,
-            name: values.name,
-            initials: Array.from(values.name)[0].toUpperCase(),
-            phone: values.reachableContact,
-            nrc: "",
-            school: "",
-            start: "",
-            contact: "new",
-            journeyStep: 1,
-            now: values.nextAction ? "custom" : "none",
-            customAction: values.nextAction,
-            turn: values.nextAction ? "meetta" : "noOne",
-            nextCheck: values.dueDate || null,
-            owner: values.owner,
-            intake: {
-              channel: values.channel,
-              contactChannel: values.contactChannel,
-              contactPerson: values.contactPerson,
-              referralSource: values.referralSource,
-              googleEmail: values.googleEmail,
-              note: values.note,
-              consultation,
-              ...(matches.length && { separateReason: values.separateReason }),
-            },
-          });
-        } catch (error) {
-          if (get() !== previous) {
-            // Zustand updates memory before writing to storage.
-            try {
-              set(previous, true);
-            } catch {
-              // The in-memory state has already been restored.
-            }
-          }
-          throw error;
-        }
+        const needsBooking = values.status === "inquiry" && !values.nextAction;
+        withStorageRollback(
+          get,
+          (state) => set(state, true),
+          () => {
+            previous.addStudent(
+              {
+                id,
+                name: values.name,
+                initials: Array.from(values.name)[0].toUpperCase(),
+                phone: values.reachableContact,
+                nrc: "",
+                school: "",
+                start: "",
+                contact: "new",
+                journeyStep: 1,
+                now: needsBooking
+                  ? "bookConsultation"
+                  : values.nextAction
+                    ? "custom"
+                    : "none",
+                customAction: values.nextAction,
+                turn: needsBooking || values.nextAction ? "meetta" : "noOne",
+                nextCheck:
+                  values.dueDate || (needsBooking ? yangonToday() : null),
+                owner: values.owner,
+                intake: {
+                  channel: values.channel,
+                  contactChannel: values.contactChannel,
+                  contactPerson: values.contactPerson,
+                  referralSource: values.referralSource,
+                  googleEmail: values.googleEmail,
+                  note: values.note,
+                  consultation,
+                  ...(matches.length && {
+                    separateReason: values.separateReason,
+                  }),
+                },
+              },
+              author,
+            );
+          },
+        );
         return { id };
       },
-      addStudent(student) {
+      addStudent(student, author) {
         if (!student.name.trim()) return;
         student = studentSchema.parse(student);
-        const entry = event("studentAdded", student.name);
+        const entry = {
+          ...event("studentAdded", student.name),
+          author,
+          intakeChannel: student.intake?.channel,
+        };
         set((state) => ({
           students: [...state.students, student],
           plans: { ...state.plans, [student.id]: createPlan(student) },

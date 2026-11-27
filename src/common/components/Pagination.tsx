@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/providers/locale-provider";
 
 type PaginationProps = {
+  alwaysShow?: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
   tableLabel: string;
@@ -15,11 +16,11 @@ type PaginationProps = {
 
 type PageItem = number | "ellipsis-left" | "ellipsis-right";
 
-const PAGE_SIZE = 5;
+export const PAGE_SIZE = 10;
 
-export function usePagination<T>(rows: readonly T[], resetKey = "") {
+export function usePageNavigation(rowCount: number, resetKey = "") {
   const [position, setPosition] = useState({ page: 1, resetKey });
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(rowCount / PAGE_SIZE));
   const currentPage =
     position.resetKey === resetKey ? Math.min(position.page, totalPages) : 1;
 
@@ -27,19 +28,25 @@ export function usePagination<T>(rows: readonly T[], resetKey = "") {
     setPosition({ page: currentPage, resetKey });
   }
 
-  const offset = (currentPage - 1) * PAGE_SIZE;
+  return {
+    currentPage,
+    totalPages,
+    onPageChange: (page: number) => setPosition({ page, resetKey }),
+  };
+}
+
+export function usePagination<T>(rows: readonly T[], resetKey = "") {
+  const pagination = usePageNavigation(rows.length, resetKey);
+  const offset = (pagination.currentPage - 1) * PAGE_SIZE;
   return {
     offset,
     pageRows: rows.slice(offset, offset + PAGE_SIZE),
-    pagination: {
-      currentPage,
-      totalPages,
-      onPageChange: (page: number) => setPosition({ page, resetKey }),
-    },
+    pagination,
   };
 }
 
 export function Pagination({
+  alwaysShow = false,
   currentPage,
   onPageChange,
   tableLabel,
@@ -47,16 +54,16 @@ export function Pagination({
 }: PaginationProps) {
   const { dictionary } = useLocale();
   const copy = dictionary.pagination;
-  if (totalPages <= 1) return null;
+  if (!alwaysShow && totalPages <= 1) return null;
 
   const pages = getVisiblePages(currentPage, totalPages);
 
   return (
     <nav
-      className="mt-4"
+      className="mt-3 overflow-x-auto p-1"
       aria-label={copy.label.replace("{table}", tableLabel)}
     >
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
+      <div className="ml-auto flex w-max items-center gap-1.5">
         <PageArrow
           disabled={currentPage === 1}
           label={copy.previous}

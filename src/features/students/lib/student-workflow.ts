@@ -1,5 +1,6 @@
 import type {
   Actor,
+  ConsultationOutcome,
   MessageAction,
   PaperReview,
   Student,
@@ -9,6 +10,7 @@ import type {
 
 export type StudentFilter = "all" | Actor;
 export type CallAction = Extract<MessageAction, { kind: "call" }>;
+export const consultationDuration = 40;
 
 export function yangonToday() {
   return new Intl.DateTimeFormat("en-CA", {
@@ -21,6 +23,22 @@ export function addDays(date: string, days: number) {
   const result = new Date(date + "T00:00:00Z");
   result.setUTCDate(result.getUTCDate() + days);
   return result.toISOString().slice(0, 10);
+}
+
+export function consultationNextAction(
+  result: Pick<ConsultationOutcome, "status" | "date"> & {
+    outcome?: Extract<ConsultationOutcome, { status: "completed" }>["outcome"];
+  },
+): Pick<Student, "now" | "nextCheck" | "turn"> {
+  if (result.status !== "completed")
+    return { now: "bookConsultation", nextCheck: result.date, turn: "meetta" };
+  if (result.outcome === "ready" || result.outcome === "needsHelp")
+    return {
+      now: result.outcome === "ready" ? "plan" : "consultationFollowUp",
+      nextCheck: addDays(result.date, 2),
+      turn: "meetta",
+    };
+  return { now: "none", nextCheck: null, turn: "noOne" };
 }
 
 export function callDateLabel(date: string, locale: "en" | "my") {
@@ -38,16 +56,20 @@ export function isCallSlotTaken(
   host: string,
   date: string,
   time: string,
+  { duration = 30, ignoreId }: { duration?: number; ignoreId?: string } = {},
 ) {
   const minutes = (slot: string) =>
     Number(slot.slice(0, 2)) * 60 + Number(slot.slice(3));
   const start = minutes(time);
   return Object.entries(messages).some(([id, thread]) =>
     thread.some(
-      ({ action, author }) =>
+      ({ action, author, id: messageId }) =>
+        messageId !== ignoreId &&
         action?.kind === "call" &&
+        !action.booking?.status &&
         action.date === date &&
-        Math.abs(minutes(action.time) - start) < 30 &&
+        minutes(action.time) < start + duration &&
+        start < minutes(action.time) + (action.booking?.duration ?? 30) &&
         (id === studentId || (action.booking?.host ?? author) === host),
     ),
   );
@@ -57,9 +79,10 @@ export function filterStudents(
   students: Student[],
   query: string,
   filter: StudentFilter,
+  history: WorkspaceData["history"] = {},
 ) {
   const search = query.trim().toLowerCase();
-  return students.filter(
+  const matches = students.filter(
     (student) =>
       (filter === "all" || student.turn === filter) &&
       (!search ||
@@ -67,6 +90,18 @@ export function filterStudents(
           (value) => value.toLowerCase().includes(search),
         )),
   );
+  const added: Student[] = [];
+  const existing: Student[] = [];
+  for (const student of matches) {
+    const list = history[student.id]?.some(
+      ({ kind }) => kind === "studentAdded",
+    )
+      ? added
+      : existing;
+    list.push(student);
+  }
+  // The store appends new students in creation order.
+  return [...added.reverse(), ...existing];
 }
 
 export function planIsReady(plan: StudentPlan) {

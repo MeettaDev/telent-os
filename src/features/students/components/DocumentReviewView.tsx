@@ -4,11 +4,9 @@ import { notFound } from "next/navigation";
 import { Check, RotateCcw, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 import { useMockUser } from "@/common/auth/mock-auth";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { WorkspacePageHeader } from "@/common/components/WorkspacePageHeader";
 import { PageSkeleton } from "@/common/components/PageSkeleton";
 import {
@@ -140,7 +138,7 @@ function ReviewWorkspace({
       <div
         role="img"
         aria-label={t.review.preview + (old ? " · v1" : " · v" + paper.version)}
-        className="min-h-96 overflow-auto rounded-xl bg-slate-800 p-4 sm:p-5"
+        className="min-h-96 overflow-auto rounded-xl bg-slate-800 p-5 sm:p-8 xl:p-10"
       >
         <div
           className="space-y-3 transition-transform motion-reduce:transition-none"
@@ -153,9 +151,9 @@ function ReviewWorkspace({
             (side) => (
               <div
                 key={side}
-                className="aspect-video rounded-xl bg-slate-200 p-4 text-slate-500"
+                className="aspect-[1.58] rounded-lg bg-slate-200 p-4 text-slate-500"
               >
-                <p className="text-xs font-bold uppercase">
+                <p className="text-xs font-bold uppercase text-neutral-500">
                   {group === "legalized" ? side : label(paper.id)}
                 </p>
                 <div className="mt-3 space-y-2">
@@ -184,53 +182,16 @@ function ReviewWorkspace({
   return (
     <main id="main-content">
       <WorkspacePageHeader
-        title={t.review.title + " · " + label(paper.id)}
-        description={
-          awaitingUpload
-            ? t.review.awaitingUpload
-            : group === "legalized"
-              ? t.review.subtitle
-              : t.documents[group].title + " · v" + paper.version
-        }
-        breadcrumbs={[
-          { label: t.breadcrumb, href: "/students" },
-          { label: student.name, href: "/students/" + student.id },
-          {
-            label:
-              group === "legalized" ? t.review.step : t.documents[group].title,
-          },
-        ]}
-        actions={
-          <>
-            {!awaitingUpload && paper.status !== "fix" && (
-              <Badge variant="warning">{t.review.answerBy}</Badge>
-            )}
-            <Badge
-              variant={
-                awaitingUpload
-                  ? "secondary"
-                  : paper.status === "fix"
-                    ? "warning"
-                    : "purple"
-              }
-              className="gap-2"
-            >
-              <span className="flex size-6 items-center justify-center rounded-full bg-violet-600 text-xs text-white">
-                {user.initials}
-              </span>
-              {awaitingUpload
-                ? t.statuses.toSend
-                : paper.status === "fix"
-                  ? t.statuses.fix
-                  : t.review.reviewing}
-            </Badge>
-          </>
+        title={
+          <span className="text-[clamp(1.375rem,3vw,1.875rem)] tracking-normal">
+            {t.review.title + " · " + label(paper.id)}
+          </span>
         }
       />
-      <div className="grid items-start gap-5 px-4 pb-10 md:px-6 xl:grid-cols-12 xl:px-8">
-        <Card className="xl:col-span-3">
+      <div className="grid items-start gap-5 px-4 pb-10 md:px-6 xl:grid-cols-[minmax(0,0.76fr)_minmax(0,1.3fr)_minmax(0,1fr)] xl:px-8">
+        <Card className="border-0">
           <CardContent className="p-4">
-            <h2 className="px-1 pb-3 text-xs font-semibold uppercase text-primary-hover">
+            <h2 className="px-1 pb-3 text-sm font-bold uppercase text-primary">
               {t.review.paperCount
                 .replace("{total}", String(papers.length))
                 .replace(
@@ -243,7 +204,7 @@ function ReviewWorkspace({
                   ),
                 )}
             </h2>
-            <div className="grid max-h-64 grid-cols-2 gap-1 overflow-y-auto xl:max-h-none xl:grid-cols-1">
+            <div className="grid max-h-64 grid-cols-1 gap-1 sm:grid-cols-2 overflow-y-auto xl:max-h-none xl:grid-cols-1">
               {papers.map((item) => (
                 <button
                   type="button"
@@ -256,7 +217,7 @@ function ReviewWorkspace({
                     setError("");
                   }}
                   className={cn(
-                    "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "flex cursor-pointer items-center gap-3 rounded-2xl border px-2.5 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     item.id === paper.id
                       ? "border-primary bg-primary-tint"
                       : "border-transparent hover:bg-muted",
@@ -266,7 +227,7 @@ function ReviewWorkspace({
                     className={cn(
                       "flex size-6 shrink-0 items-center justify-center rounded-full text-sm font-bold",
                       !awaitingUpload && item.status === "approved"
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                        ? "bg-emerald-700 text-white"
                         : item.status === "fix"
                           ? "bg-destructive-tint text-destructive"
                           : "bg-primary text-primary-foreground",
@@ -281,10 +242,15 @@ function ReviewWorkspace({
                     )}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-semibold leading-5">
+                    <span
+                      className={cn(
+                        "block text-base leading-5",
+                        item.id === paper.id && "font-semibold",
+                      )}
+                    >
                       {label(item.id)}
                     </span>
-                    <span className="mt-1 block text-xs leading-4.5 text-muted-foreground">
+                    <span className="block text-xs leading-4 text-muted-foreground">
                       v{item.version} ·{" "}
                       {awaitingUpload
                         ? t.statuses.toSend
@@ -300,10 +266,10 @@ function ReviewWorkspace({
             </div>
           </CardContent>
         </Card>
-        <Card className="min-w-0 xl:col-span-5">
-          <CardContent className="p-4 sm:p-6">
+        <Card className="min-w-0 border-0">
+          <CardContent className="p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="min-w-0 wrap-anywhere text-sm font-semibold leading-5">
+              <h2 className="min-w-0 flex-1 wrap-anywhere text-sm font-semibold leading-5">
                 {awaitingUpload ? (
                   t.review.awaitingUpload
                 ) : (
@@ -315,42 +281,25 @@ function ReviewWorkspace({
                   </>
                 )}
               </h2>
-              <div className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center gap-1">
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t.review.zoom}
-                  disabled={awaitingUpload}
-                  onClick={() =>
-                    setZoom((value) => (value >= 1.5 ? 1 : value + 0.25))
-                  }
-                >
-                  <ZoomIn aria-hidden="true" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t.review.rotate}
-                  disabled={awaitingUpload}
-                  onClick={() => setRotation((value) => (value + 90) % 360)}
-                >
-                  <RotateCcw aria-hidden="true" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="app-text"
+                  variant="outline"
                   aria-pressed={compare}
                   disabled={awaitingUpload}
-                  className="h-auto whitespace-normal px-2 text-sm text-primary-hover"
+                  className="h-10 rounded-full border-primary px-4 text-sm text-foreground"
                   onClick={() => setCompare((value) => !value)}
                 >
                   {compare ? t.review.hideCompare : t.review.compare}
                 </Button>
               </div>
             </div>
-            <div className={cn("grid gap-3", compare && "sm:grid-cols-2")}>
+            <div
+              className={cn(
+                "grid gap-3",
+                compare && "sm:grid-cols-2 xl:grid-cols-1",
+              )}
+            >
               {compare && (
                 <div>
                   <h3 className="mb-2 text-xs font-semibold text-muted-foreground">
@@ -368,20 +317,39 @@ function ReviewWorkspace({
                 {canvas()}
               </div>
             </div>
+            <div className="mt-2 flex justify-end gap-1">
+              {" "}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t.review.zoom}
+                disabled={awaitingUpload}
+                onClick={() =>
+                  setZoom((value) => (value >= 1.5 ? 1 : value + 0.25))
+                }
+              >
+                <ZoomIn aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t.review.rotate}
+                disabled={awaitingUpload}
+                onClick={() => setRotation((value) => (value + 90) % 360)}
+              >
+                <RotateCcw aria-hidden="true" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
-        <fieldset
-          disabled={awaitingUpload}
-          className="min-w-0 space-y-5 xl:col-span-4"
-        >
-          <Card>
-            <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
+        <fieldset disabled={awaitingUpload} className="min-w-0 space-y-4">
+          <Card className="border-0">
+            <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 p-5 pb-3">
               <CardTitle>{t.review.checklist}</CardTitle>
-              {!awaitingUpload && (
-                <Badge variant="success">{t.review.studentChecked}</Badge>
-              )}
             </CardHeader>
-            <CardContent className="divide-y">
+            <CardContent className="divide-y px-5 pb-5">
               {(["names", "clear", "sides"] as const).map((check, index) => (
                 <div
                   key={check}
@@ -391,7 +359,7 @@ function ReviewWorkspace({
                   <div
                     role="group"
                     aria-label={t.review.checks[check]}
-                    className="flex shrink-0 rounded-xl bg-muted p-0.5"
+                    className="flex shrink-0 rounded-full bg-muted p-0.5"
                   >
                     {(["ok", "fix"] as const).map((value) => (
                       <Button
@@ -402,7 +370,7 @@ function ReviewWorkspace({
                           !awaitingUpload && paper.checks[index] === value
                         }
                         className={cn(
-                          "h-8 rounded-lg px-2 text-xs",
+                          "h-7 rounded-full px-2.5 text-xs",
                           !awaitingUpload &&
                             paper.checks[index] === value &&
                             (value === "ok"
@@ -423,15 +391,15 @@ function ReviewWorkspace({
               ))}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
+          <Card className="border-0">
+            <CardHeader className="p-5 pb-3">
               <CardTitle>{t.review.decision}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-2 sm:grid-cols-2">
+            <CardContent className="px-5 pb-5">
+              <div className="grid gap-2">
                 <Button
                   type="button"
-                  className="h-auto min-h-9 whitespace-normal bg-emerald-700 px-3 py-2 text-sm leading-5 text-white hover:bg-emerald-800"
+                  className="h-11 w-full rounded-full whitespace-normal bg-emerald-700 px-3 py-2 text-sm leading-5 text-white hover:bg-emerald-800"
                   onClick={approve}
                 >
                   {t.review.approve}
@@ -449,7 +417,7 @@ function ReviewWorkspace({
                       type="button"
                       variant="outline"
                       disabled={awaitingUpload}
-                      className="h-auto min-h-9 whitespace-normal border-orange-700 px-3 py-2 text-sm leading-5 text-orange-700 hover:bg-orange-50 dark:text-orange-300 dark:hover:bg-orange-950/40"
+                      className="h-11 w-full rounded-full whitespace-normal border-orange-700 px-3 py-2 text-sm leading-5 text-orange-700 hover:bg-orange-50 dark:text-orange-300 dark:hover:bg-orange-950/40"
                     >
                       {t.review.askFix}
                     </Button>
@@ -513,12 +481,9 @@ function ReviewWorkspace({
               )}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
+          <Card className="border-0">
+            <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 p-5 pb-3">
               <CardTitle>{t.review.reasonsTitle}</CardTitle>
-              <span className="text-xs font-semibold text-muted-foreground">
-                {t.review.reasonRequired}
-              </span>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex flex-wrap gap-1">
@@ -529,10 +494,10 @@ function ReviewWorkspace({
                     variant="ghost"
                     aria-pressed={selectedReason === reason}
                     className={cn(
-                      "h-7 rounded-full px-2 text-xs",
+                      "h-8 rounded-full border px-3 text-sm",
                       selectedReason === reason
-                        ? "bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300"
-                        : "bg-muted text-muted-foreground",
+                        ? "border-orange-700 bg-orange-50 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300"
+                        : "border-transparent bg-muted text-muted-foreground",
                     )}
                     onClick={() => update({ reasons: [reason] })}
                   >
@@ -540,21 +505,8 @@ function ReviewWorkspace({
                   </Button>
                 ))}
               </div>
-              <label className="block space-y-2 text-xs font-semibold text-muted-foreground">
-                <span>{t.review.note}</span>
-                <Textarea
-                  className="min-h-20 px-3 py-2 leading-5 sm:text-sm"
-                  maxLength={2000}
-                  value={paper.note}
-                  placeholder={t.review.reasonPlaceholder}
-                  onChange={(event) => update({ note: event.target.value })}
-                />
-              </label>
               {!awaitingUpload && (
                 <>
-                  <h3 className="text-xs font-bold uppercase text-primary-hover">
-                    {t.review.studentSees.replace("{student}", student.name)}
-                  </h3>
                   <div className="rounded-xl bg-orange-50 p-4 dark:bg-orange-950/40">
                     <p className="text-xs font-bold uppercase text-orange-800 dark:text-orange-300">
                       {t.review.sentBack}

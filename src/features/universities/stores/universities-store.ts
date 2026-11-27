@@ -2,7 +2,10 @@
 
 import { create } from "zustand";
 import { z } from "zod";
-import { universityFixtures } from "../mocks/university-data";
+import {
+  demoUniversityFixtures,
+  universityFixtures,
+} from "../mocks/university-data";
 import {
   universityFieldsSchema,
   universitySchema,
@@ -17,9 +20,15 @@ const recordsSchema = z.array(universitySchema);
 
 function readRecords() {
   const saved = localStorage.getItem(storageKey);
-  return saved === null
-    ? universityFixtures
-    : recordsSchema.parse(JSON.parse(saved));
+  if (saved === null) return universityFixtures;
+
+  const records = recordsSchema.parse(JSON.parse(saved));
+  const ids = new Set(records.map(({ id }) => id));
+  const names = new Set(records.map(({ name }) => name.toLocaleLowerCase()));
+  const missingDemos = demoUniversityFixtures.filter(
+    ({ id, name }) => !ids.has(id) && !names.has(name.toLocaleLowerCase()),
+  );
+  return [...records, ...missingDemos];
 }
 
 type State = {

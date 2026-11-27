@@ -40,40 +40,7 @@ export function StudentGoals() {
                 {goal.check}
               </span>
             </div>
-            <ol
-              className={cn(
-                "mt-2 grid gap-1",
-                goal.steps.length === 5 ? "grid-cols-5" : "grid-cols-4",
-              )}
-            >
-              {goal.steps.map((step, index) => (
-                <li key={step} className="text-xs leading-5">
-                  <span
-                    className={cn(
-                      "mb-1 block h-1.5 rounded-full",
-                      index === 0
-                        ? "bg-violet-600"
-                        : index === 1
-                          ? "bg-violet-400"
-                          : "bg-violet-100 dark:bg-violet-950",
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "text-xs leading-5",
-                      index === 0
-                        ? "text-violet-700 dark:text-violet-300"
-                        : index === 1
-                          ? "font-semibold"
-                          : "text-muted-foreground",
-                    )}
-                  >
-                    {index === 0 ? "✓ " : ""}
-                    {t.goalSteps[step]}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <GoalProgress steps={goal.steps} />
             <p className="mt-2 text-sm leading-5 text-muted-foreground">
               {goal.note}
             </p>
@@ -81,5 +48,46 @@ export function StudentGoals() {
         ))}
       </CardContent>
     </Card>
+  );
+}
+
+export function GoalProgress({
+  steps,
+}: {
+  steps: readonly (keyof import("@/common/i18n/dictionaries").Dictionary["studentWorkspace"]["goalSteps"])[];
+}) {
+  const { dictionary } = useLocale();
+  return (
+    <ol
+      className="grid gap-1"
+      style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+    >
+      {steps.map((step, index) => (
+        <li key={step} className="min-w-0 text-[11px] leading-5">
+          <span
+            className={cn(
+              "mb-1 block h-1.5 rounded-full",
+              index === 0
+                ? "bg-violet-600"
+                : index === 1
+                  ? "bg-violet-400"
+                  : "bg-violet-100 dark:bg-violet-950",
+            )}
+          />
+          <span
+            className={cn(
+              index === 0
+                ? "text-violet-600 dark:text-violet-300"
+                : index === 1
+                  ? "font-semibold"
+                  : "text-muted-foreground",
+            )}
+          >
+            {index === 0 && "✓ "}
+            {dictionary.studentWorkspace.goalSteps[step]}
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }

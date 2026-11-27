@@ -1,107 +1,123 @@
 "use client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { WorkspacePageHeader } from "@/common/components/WorkspacePageHeader";
-import type { Student, StudentPlan } from "@/features/students/types/student";
+import { useStudentsStore } from "@/features/students/stores/students-store";
+import type { Student } from "@/features/students/types/student";
 import type { StudentAction } from "@/features/students/components/StudentActionDialog";
 import { useLocale } from "@/providers/locale-provider";
-import { useStudentsStore } from "@/features/students/stores/students-store";
+import { cn } from "@/lib/utils";
+import { NextActionPopover } from "./NextActionPopover";
 
 export function StudentDetailHeader({
   student,
-  plan,
   onAction,
 }: {
   student: Student;
-  plan: StudentPlan;
   onAction: (action: StudentAction) => void;
 }) {
-  const { dictionary } = useLocale();
+  const { dictionary, locale } = useLocale();
   const t = dictionary.studentWorkspace;
-  const history = useStudentsStore((state) => state.history[student.id]);
-  const confirmed = history?.some((entry) => entry.kind === "planConfirmed");
+  const copy = t.consultation;
+  const consultation =
+    student.journeyStep === 1 ? student.intake?.consultation : undefined;
+  const created = useStudentsStore((state) =>
+    state.history[student.id]?.find((entry) => entry.kind === "studentAdded"),
+  );
+  const date = created && new Date(created.at);
+  const createLabel =
+    consultation && created?.author && date && !Number.isNaN(date.getTime())
+      ? copy.addedBy
+          .replace("{author}", created.author)
+          .replace(
+            "{date}",
+            new Intl.DateTimeFormat(locale === "my" ? "my-MM" : "en-US", {
+              month: "short",
+              day: "numeric",
+              timeZone: "Asia/Yangon",
+            }).format(date),
+          )
+      : "";
+  const phone = consultation
+    ? student.phone.replace(
+        /(\+95[ -]?9|09|၀၉)(?:[ -]?[0-9၀-၉]){3}[ -]?/,
+        "$1 ••• ",
+      )
+    : student.phone;
+  const planToWrite =
+    consultation?.status === "completed" && student.now === "plan";
   return (
     <WorkspacePageHeader
-      title={student.name}
+      title={
+        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="text-[clamp(1.5rem,3vw,1.875rem)] tracking-normal">
+            {student.name}
+          </span>
+          {consultation && (
+            <Badge
+              variant={
+                planToWrite
+                  ? "warning"
+                  : consultation.status === "scheduled"
+                    ? "tint"
+                    : "secondary"
+              }
+              className="rounded-full text-xs tracking-normal"
+            >
+              {planToWrite
+                ? copy.planToWrite
+                : consultation.status === "inquiry"
+                  ? copy.inquiry
+                  : consultation.status === "scheduled"
+                    ? dictionary.inboxWorkspace.callBooking.booked
+                    : t.intake.statuses[consultation.status]}
+            </Badge>
+          )}
+        </span>
+      }
       avatar={
         <span
           aria-hidden="true"
-          className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-tint text-xl font-semibold text-primary-hover sm:size-14 sm:text-2xl"
+          className={cn(
+            "mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full text-xl font-semibold text-primary-foreground sm:size-14 sm:text-2xl",
+            consultation ? "bg-violet-600" : "bg-primary",
+          )}
         >
           {student.initials}
         </span>
       }
-      breadcrumbs={[
-        { label: t.breadcrumb, href: "/students" },
-        { label: student.name },
-      ]}
       actions={
         <>
           <Button
             type="button"
             size="sm"
-            className="text-sm"
+            className="h-11 rounded-full border-primary px-4 text-sm text-foreground"
             variant="outline"
             onClick={() => onAction("message")}
           >
             {t.detail.message}
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="text-sm"
-            variant="outline"
-            onClick={() => onAction("file")}
-          >
-            {t.detail.askFile}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="text-sm"
-            onClick={() => onAction("next")}
-          >
-            {t.detail.setNext}
-          </Button>
+          {!consultation && (
+            <Button
+              type="button"
+              size="sm"
+              className="h-11 rounded-full border-primary px-4 text-sm text-foreground"
+              variant="outline"
+              onClick={() => onAction("file")}
+            >
+              {t.detail.askFile}
+            </Button>
+          )}
+          <NextActionPopover student={student} />
         </>
       }
     >
-      <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
-        <Badge
-          variant={plan.status === "confirmed" ? "success" : "tint"}
-          className="whitespace-nowrap px-2 text-sm leading-4"
-        >
-          {t.detail.planBadge
-            .replace("{version}", String(plan.version))
-            .replace(
-              "{status}",
-              plan.status === "confirmed" && !confirmed
-                ? t.detail.confirmedDate
-                : t.statuses[plan.status],
-            )}
-        </Badge>
-        <Badge
-          variant="tint"
-          className="whitespace-nowrap px-2 text-sm leading-4"
-        >
-          {t.contacts[student.contact]}
-        </Badge>
-        <Badge
-          variant="purple"
-          className="whitespace-nowrap px-2 text-sm leading-4"
-        >
-          {t.detail.studyOn}
-        </Badge>
-        {student.phone && (
-          <Badge
-            variant="secondary"
-            className="whitespace-nowrap px-2 text-sm leading-4"
-          >
-            {t.intake.channels[student.intake?.contactChannel ?? "viber"]}{" "}
-            {student.phone}
-          </Badge>
-        )}
-      </div>
+      <p className="mt-2 text-xs font-semibold text-muted-foreground">
+        {student.phone
+          ? `${t.intake.channels[student.intake?.contactChannel ?? "viber"]} ${phone}`
+          : t.contacts[student.contact]}
+        {createLabel && " · " + createLabel}
+      </p>
     </WorkspacePageHeader>
   );
 }

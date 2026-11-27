@@ -7,6 +7,7 @@ export const intakeChannels = [
   "office",
   "viber",
   "facebook",
+  "tiktok",
   "referral",
   "other",
 ] as const;
@@ -17,12 +18,41 @@ export const consultationStatuses = [
   "scheduled",
   "completed",
 ] as const;
-export const referralSources = [
-  ...intakeChannels,
-  "tiktok",
-  "website",
-] as const;
+export const referralSources = [...intakeChannels, "website"] as const;
 export const consultationTimeSchema = z.iso.time({ precision: -1 });
+export const consultationModes = ["online", "office"] as const;
+export const consultationOutcomes = [
+  "ready",
+  "needsHelp",
+  "notNow",
+  "notEligible",
+] as const;
+export const consultationAttendance = ["completed", "noShow", "moved"] as const;
+const consultationHost = z.enum(["H", "N"]);
+const appointmentSchema = z.object({
+  date: dateSchema,
+  time: consultationTimeSchema,
+  mode: z.enum(consultationModes).optional(),
+  host: consultationHost.optional(),
+  messageId: z.string().optional(),
+});
+export const consultationBookingSchema = appointmentSchema
+  .omit({ messageId: true })
+  .required();
+export const consultationOutcomeSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("completed"),
+    date: dateSchema,
+    outcome: z.enum(consultationOutcomes),
+    goal: z.string().trim().max(200),
+    notes: z.string().trim().max(1000),
+  }),
+  z.object({
+    status: z.enum(["noShow", "moved"]),
+    date: dateSchema,
+    notes: z.string().trim().max(1000),
+  }),
+]);
 
 const intakeSchema = z.object({
   channel: z.enum(intakeChannels),
@@ -34,16 +64,20 @@ const intakeSchema = z.object({
   separateReason: z.string().optional(),
   consultation: z.discriminatedUnion("status", [
     z.object({ status: z.literal("inquiry") }),
-    z.object({
-      status: z.literal("scheduled"),
-      date: dateSchema,
-      time: consultationTimeSchema,
-    }),
+    appointmentSchema.extend({ status: z.literal("scheduled") }),
     z.object({
       status: z.literal("completed"),
       date: dateSchema,
       outcome: z.string(),
       goal: z.string(),
+      notes: z.string().optional(),
+      appointment: appointmentSchema.optional(),
+    }),
+    z.object({
+      status: z.enum(["noShow", "moved"]),
+      date: dateSchema,
+      notes: z.string(),
+      appointment: appointmentSchema.optional(),
     }),
   ]),
 });
@@ -75,6 +109,9 @@ export const taskKeys = [
   "planSent",
   "planConfirmed",
   "planChangeRequested",
+  "bookConsultation",
+  "holdConsultation",
+  "consultationFollowUp",
   "custom",
 ] as const;
 
@@ -129,6 +166,9 @@ export const paperSchema = z.object({
 export const historySchema = z.object({
   id: z.string(),
   at: z.string(),
+  author: z.string().optional(),
+  intakeChannel: z.enum(intakeChannels).optional(),
+  consultationOutcome: z.enum(consultationOutcomes).optional(),
   kind: z.enum([
     "reviewApproved",
     "reviewFix",
@@ -140,6 +180,13 @@ export const historySchema = z.object({
     "messageSent",
     "fileRequested",
     "nextActionSet",
+    "consultationBooked",
+    "consultationRescheduled",
+    "consultationCompleted",
+    "consultationOutcome",
+    "consultationNoShow",
+    "consultationMoved",
+    "contactUpdated",
   ]),
   detail: z.string(),
 });
@@ -162,8 +209,10 @@ export const messageActionSchema = z.discriminatedUnion("kind", [
     time: z.iso.time({ precision: -1 }),
     booking: z
       .object({
-        mode: z.enum(["online", "office"]),
+        mode: z.enum(consultationModes),
         host: z.string().trim().min(1),
+        duration: z.literal(40).optional(),
+        status: z.enum(consultationAttendance).optional(),
       })
       .optional(),
   }),
@@ -201,6 +250,9 @@ export const storedWorkspaceSchema = workspaceSchema.extend({
 
 export type Actor = z.infer<typeof actorSchema>;
 export type Student = z.infer<typeof studentSchema>;
+export type Consultation = z.infer<typeof intakeSchema>["consultation"];
+export type ConsultationBooking = z.infer<typeof consultationBookingSchema>;
+export type ConsultationOutcome = z.infer<typeof consultationOutcomeSchema>;
 export type StudentPlan = z.infer<typeof planSchema>;
 export type PaperReview = z.infer<typeof paperSchema>;
 export type DocumentId = (typeof documentIds)[number];

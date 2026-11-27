@@ -24,7 +24,8 @@ const { createWorkspace, students, documentRows } =
   await import("../mocks/students-data.ts");
 const { findIntakeMatches, studentIntakeFormSchema } =
   await import("../lib/student-intake.ts");
-const { addDays, yangonToday } = await import("../lib/student-workflow.ts");
+const { addDays, filterStudents, yangonToday } =
+  await import("../lib/student-workflow.ts");
 const { waitingCount } = await import("../../inbox/mocks/inbox-data.ts");
 hooks.deregister();
 const id = "MM-2026-0150";
@@ -275,6 +276,45 @@ test("Reachable contact requires a Myanmar mobile number on every contact channe
       );
     }
   }
+});
+
+test("The short intake form saves TikTok arrivals as inquiries without a referral source", async () => {
+  const input = {
+    name: "  New Intake  ",
+    reachableContact: "၀၉ ၄၄၄ ၄၄၄ ၄၄၄",
+    contactChannel: "viber",
+    contactPerson: "guardian",
+    channel: "tiktok",
+    owner: "N",
+  };
+  const { createIntakeStudent } = store.getState();
+  assert.throws(() => createIntakeStudent({ ...input, name: "   " }));
+  assert.throws(() => createIntakeStudent({ ...input, channel: "website" }));
+  assert.throws(() =>
+    createIntakeStudent({ ...input, separateReason: "x".repeat(501) }),
+  );
+
+  const result = createIntakeStudent(input);
+  assert.ok(result.id);
+  const latest = createIntakeStudent({
+    ...input,
+    name: "Latest Intake",
+    reachableContact: "09 555 555 555",
+  });
+  assert.ok(latest.id);
+  await store.persist.rehydrate();
+  const state = store.getState();
+  const student = state.students.find(({ id }) => id === result.id);
+  const list = filterStudents(state.students, "", "all", state.history);
+  assert.deepEqual(
+    list.slice(0, 2).map(({ id }) => id),
+    [latest.id, result.id],
+  );
+  assert.equal(student.name, "New Intake");
+  assert.equal(student.owner, "N");
+  assert.equal(student.intake.channel, "tiktok");
+  assert.equal(student.intake.referralSource, "");
+  assert.deepEqual(student.intake.consultation, { status: "inquiry" });
 });
 
 test("Saving intake rechecks normalized contacts and requires a reason for shared contacts", async () => {
@@ -553,4 +593,159 @@ test("Inbox call bookings persist and block overlapping host or student slots", 
     store.getState().messages[id].map(({ action }) => action),
     [call],
   );
+});
+
+test("Consultation booking and rescheduling share Inbox availability and persist the outcome", async () => {
+  const {
+    createIntakeStudent,
+    bookConsultation,
+    sendMessage,
+    recordConsultationOutcome,
+  } = store.getState();
+  const studentId = createIntakeStudent(
+    { ...intake, reachableContact: "09 427 000 100" },
+    [],
+    "Intake Author",
+  ).id;
+  const today = yangonToday();
+  const date = addDays(today, 1);
+  const appointment = { date, time: "10:00", mode: "online", host: "H" };
+  const book = (input) =>
+    bookConsultation(studentId, input, "Counselor", "Consultation booked");
+  const find = () =>
+    store.getState().students.find((item) => item.id === studentId);
+
+  assert.equal(find().now, "bookConsultation");
+  assert.equal(find().nextCheck, today);
+  sendMessage(id, "Call booked", "Counselor", {
+    kind: "call",
+    date,
+    time: "09:30",
+    booking: { host: "Hsu Wai", mode: "online" },
+  });
+  assert.equal(book({ ...appointment, time: "09:00" }), false);
+  assert.equal(book(appointment), true);
+  assert.equal(find().now, "holdConsultation");
+  assert.equal(find().nextCheck, date);
+  assert.equal(
+    store.getState().messages[studentId][0].action.booking.duration,
+    40,
+  );
+  assert.throws(
+    () =>
+      sendMessage(id, "Inbox overlap", "Counselor", {
+        kind: "call",
+        date,
+        time: "10:30",
+        booking: { host: "Hsu Wai", mode: "office" },
+      }),
+    /Call slot unavailable/,
+  );
+  const messageId = find().intake.consultation.messageId;
+  assert.equal(book({ ...appointment, time: "10:15", mode: "office" }), true);
+  assert.equal(store.getState().messages[studentId].length, 1);
+  assert.equal(store.getState().messages[studentId][0].id, messageId);
+  assert.equal(store.getState().messages[studentId][0].action.time, "10:15");
+
+  const result = {
+    status: "completed",
+    date: today,
+    outcome: "ready",
+    goal: "D2 Caregiver",
+    notes: " Staff notes ",
+  };
+  assert.equal(
+    recordConsultationOutcome(studentId, { ...result, date }),
+    false,
+  );
+  assert.equal(recordConsultationOutcome(studentId, result), true);
+  assert.equal(book(appointment), false);
+  await store.persist.rehydrate();
+  assert.equal(find().intake.consultation.notes, "Staff notes");
+  assert.equal(find().intake.consultation.appointment.mode, "office");
+  assert.equal(find().now, "plan");
+  assert.equal(find().nextCheck, addDays(today, 2));
+  const { messages, history, plans } = store.getState();
+  assert.equal(plans[studentId].status, "draft");
+  assert.equal(plans[studentId].program, "D2 Caregiver");
+  assert.equal(messages[studentId][0].action.booking.status, "completed");
+  assert.equal(messages[studentId][0].text, "Consultation booked");
+  assert.deepEqual(
+    history[studentId].map(({ kind }) => kind),
+    [
+      "consultationOutcome",
+      "consultationCompleted",
+      "consultationRescheduled",
+      "consultationBooked",
+      "studentAdded",
+    ],
+  );
+  assert.equal(history[studentId].at(-1).author, "Intake Author");
+});
+
+test("Consultation outcomes select the next action and contact edits preserve the workflow", async () => {
+  const {
+    createIntakeStudent,
+    bookConsultation,
+    recordConsultationOutcome,
+    updateIntakeContact,
+  } = store.getState();
+  const today = yangonToday();
+  const cases = [
+    {
+      status: "completed",
+      outcome: "needsHelp",
+      now: "consultationFollowUp",
+      due: addDays(today, 2),
+    },
+    { status: "completed", outcome: "notNow", now: "none", due: null },
+    { status: "completed", outcome: "notEligible", now: "none", due: null },
+    { status: "noShow", now: "bookConsultation", due: today },
+    { status: "moved", now: "bookConsultation", due: today },
+  ];
+  for (const [index, example] of cases.entries()) {
+    const input = {
+      ...intake,
+      reachableContact: "09 427 000 10" + (index + 1),
+    };
+    const studentId = createIntakeStudent(input).id;
+    const appointment = {
+      date: addDays(today, 1),
+      time: "10:00",
+      mode: "office",
+      host: "N",
+    };
+    assert.equal(
+      bookConsultation(studentId, appointment, "Counselor", "Booked"),
+      true,
+    );
+    assert.equal(
+      recordConsultationOutcome(studentId, {
+        status: example.status,
+        outcome: example.outcome,
+        date: today,
+        notes: "",
+        goal: "",
+      }),
+      true,
+    );
+    assert.equal(
+      updateIntakeContact(studentId, {
+        ...input,
+        reachableContact: "09 000 000 000",
+      }),
+      false,
+    );
+    assert.equal(
+      updateIntakeContact(studentId, { ...input, name: "Updated Name" }),
+      true,
+    );
+    const student = store
+      .getState()
+      .students.find((item) => item.id === studentId);
+    assert.equal(student.name, "Updated Name");
+    assert.equal(student.now, example.now);
+    assert.equal(student.nextCheck, example.due);
+    assert.equal(student.intake.consultation.status, example.status);
+  }
 });

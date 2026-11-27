@@ -91,6 +91,26 @@ const base = {
   history: [],
 };
 
+export const demoUniversityFixtures: University[] = [
+  { id: "demo-mirae-river", name: "Mirae River College", city: "Seoul" },
+  {
+    id: "demo-blue-harbor",
+    name: "Blue Harbor Technical College",
+    city: "Busan",
+  },
+  { id: "demo-haneul", name: "Haneul Design Institute", city: "Incheon" },
+  {
+    id: "demo-gaon",
+    name: "Gaon Institute of Applied Sciences",
+    city: "Daegu",
+  },
+  { id: "demo-naru", name: "Naru Polytechnic College", city: "Daejeon" },
+  { id: "demo-saeon", name: "Saeon Health Sciences College", city: "Gwangju" },
+  { id: "demo-onbit", name: "Onbit Automotive Institute", city: "Ulsan" },
+  { id: "demo-baram", name: "Baram Hospitality College", city: "Jeonju" },
+  { id: "demo-haedam", name: "Haedam College of Technology", city: "Jeju" },
+].map((university) => ({ ...base, ...university, summary: "Demo record" }));
+
 export const universityFixtures: University[] = [
   kunjang,
   {
@@ -154,4 +174,5 @@ export const universityFixtures: University[] = [
     topik: "Level 2",
     bankProof: "8M KRW",
   },
+  ...demoUniversityFixtures,
 ];

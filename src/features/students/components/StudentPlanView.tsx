@@ -1,18 +1,18 @@
 "use client";
 import { useState } from "react";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { WorkspacePageHeader } from "@/common/components/WorkspacePageHeader";
 import { PageSkeleton } from "@/common/components/PageSkeleton";
@@ -20,6 +20,8 @@ import { universities } from "@/features/students/mocks/students-data";
 import { useStudentsStore } from "@/features/students/stores/students-store";
 import type { Student, StudentPlan } from "@/features/students/types/student";
 import { useLocale } from "@/providers/locale-provider";
+
+const noUniversity = "__no_university__";
 
 export function StudentPlanView({ studentId }: { studentId: string }) {
   const hydrated = useStudentsStore((state) => state.hydrated);
@@ -49,8 +51,6 @@ function PlanEditor({
     note: initialPlan.note || t.plan.defaultNote,
   });
   const [error, setError] = useState("");
-  const [changing, setChanging] = useState(false);
-  const [changeReason, setChangeReason] = useState("");
   const locked = plan.status === "sent" || plan.status === "confirmed";
   function field(
     key: keyof Pick<
@@ -69,31 +69,19 @@ function PlanEditor({
     setPlan((current) => ({ ...current, [key]: value }));
     setError("");
   }
-  function commit(status: StudentPlan["status"], reason = "") {
+  function commit(status: "draft" | "sent") {
     const next =
-      plan.status === "changeRequested" &&
-      (status === "draft" || status === "sent")
+      plan.status === "changeRequested"
         ? { ...plan, version: plan.version + 1 }
         : plan;
     try {
-      if (!save(student.id, next, status, reason)) {
-        setError(
-          status === "changeRequested" ? t.plan.changeError : t.plan.sendError,
-        );
+      if (!save(student.id, next, status)) {
+        setError(t.plan.sendError);
         return;
       }
-      setPlan({ ...next, status, changeReason: reason });
+      setPlan({ ...next, status, changeReason: "" });
       setError("");
-      setChanging(false);
-      toast.success(
-        status === "draft"
-          ? t.plan.saved
-          : status === "sent"
-            ? t.plan.sent
-            : status === "confirmed"
-              ? t.plan.confirmed
-              : t.plan.changeRequested,
-      );
+      toast.success(status === "draft" ? t.plan.saved : t.plan.sent);
     } catch {
       setError(t.saveError);
     }
@@ -115,175 +103,70 @@ function PlanEditor({
       setError(t.saveError);
     }
   }
+  function universityField(key: "university" | "backup") {
+    const value = plan[key];
+    const id = "plan-" + key;
+    return (
+      <div className="min-w-0 space-y-1.5">
+        <label
+          htmlFor={id}
+          className="block text-sm font-semibold text-muted-foreground"
+        >
+          {t.plan.university}
+        </label>
+        <Select
+          value={value || noUniversity}
+          onValueChange={(selected) =>
+            field(key, selected === noUniversity ? "" : selected)
+          }
+          disabled={locked}
+        >
+          <SelectTrigger id={id} className="h-12 rounded-full">
+            <SelectValue data-slot="select-value">
+              {value || t.intake.notDecided}
+            </SelectValue>
+            {key === "university" && universities.includes(value) && (
+              <Badge
+                variant="success"
+                className="shrink-0 rounded-full px-2 text-xs"
+              >
+                {t.plan.verified}
+              </Badge>
+            )}
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={noUniversity}>{t.intake.notDecided}</SelectItem>
+            {universities.map((name) => (
+              <SelectItem key={name} value={name}>
+                {name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
   const whyLines = plan.why.split(/\r?\n/).filter(Boolean);
   return (
     <main id="main-content">
       <WorkspacePageHeader
         title={
-          t.plan.title + " · v" + plan.version + " " + t.statuses[plan.status]
+          <span className="text-[clamp(1.375rem,3vw,1.875rem)] tracking-normal">
+            {t.plan.title} · {student.name}
+          </span>
         }
-        description={t.plan.description}
-        breadcrumbs={[
-          { label: t.breadcrumb, href: "/students" },
-          { label: student.name, href: "/students/" + student.id },
-          { label: t.plan.title },
-        ]}
         actions={
-          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-            <Badge variant={plan.status === "draft" ? "tint" : "secondary"}>
-              {t.statuses.draft}
-            </Badge>
-            <ArrowRight aria-hidden="true" className="size-4" />
-            <Badge variant={plan.status === "sent" ? "tint" : "secondary"}>
-              {t.statuses.sent}
-            </Badge>
-            <ArrowRight aria-hidden="true" className="size-4" />
-            <Badge
-              variant={
-                plan.status === "confirmed"
-                  ? "success"
-                  : plan.status === "changeRequested"
-                    ? "warning"
-                    : "secondary"
-              }
+          <div className="flex flex-wrap items-center gap-3">
+            <span
+              role="status"
+              className="mr-2 text-sm font-semibold text-muted-foreground"
             >
-              {plan.status === "confirmed" || plan.status === "changeRequested"
-                ? t.statuses[plan.status]
-                : t.plan.finalStatus}
-            </Badge>
-          </div>
-        }
-      />
-      <div className="grid items-start gap-5 px-4 pb-10 md:px-6 xl:grid-cols-3 xl:px-8">
-        <div className="min-w-0 space-y-5 xl:col-span-2">
-          <Card>
-            <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
-              <CardTitle>{t.plan.route}</CardTitle>
-              <span className="text-xs font-semibold text-muted-foreground">
-                {t.plan.fromUniversity}
-              </span>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-1.5 text-sm font-semibold leading-5">
-                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span>{t.plan.university}</span>
-                  {universities.includes(plan.university) && (
-                    <Badge variant="success" className="px-2 py-0 text-xs">
-                      {t.plan.verified}
-                    </Badge>
-                  )}
-                </span>
-                <Input
-                  list="plan-universities"
-                  disabled={locked}
-                  value={plan.university}
-                  onChange={(event) => field("university", event.target.value)}
-                  className="px-3 sm:text-sm"
-                />
-                <datalist id="plan-universities">
-                  {universities.map((name) => (
-                    <option key={name} value={name} />
-                  ))}
-                </datalist>
-              </label>
-              <label className="flex flex-col gap-1.5 text-sm font-semibold leading-5">
-                <span>{t.plan.program}</span>
-                <Input
-                  disabled={locked}
-                  className="px-3 sm:text-sm"
-                  value={plan.program}
-                  onChange={(event) => field("program", event.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-sm font-semibold leading-5">
-                <span>{t.plan.schedule}</span>
-                <Input
-                  disabled={locked}
-                  className="px-3 sm:text-sm"
-                  value={plan.schedule}
-                  onChange={(event) => field("schedule", event.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-sm font-semibold leading-5">
-                <span>{t.plan.topik}</span>
-                <Input
-                  disabled={locked}
-                  className="px-3 sm:text-sm"
-                  value={plan.topik}
-                  onChange={(event) => field("topik", event.target.value)}
-                />
-              </label>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
-              <CardTitle>{t.plan.whyTitle}</CardTitle>
-              <span className="text-xs font-semibold text-muted-foreground">
-                {t.plan.studentReads}
-              </span>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <label className="flex flex-col gap-1.5 text-sm font-semibold leading-5">
-                <span>{t.plan.why}</span>
-                <Textarea
-                  disabled={locked}
-                  className="px-3 py-2 leading-5 sm:text-sm"
-                  maxLength={2000}
-                  value={plan.why}
-                  onChange={(event) => field("why", event.target.value)}
-                />
-              </label>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="flex flex-col gap-1.5 text-sm font-semibold leading-5">
-                  <span>{t.plan.backup}</span>
-                  <Input
-                    disabled={locked}
-                    className="px-3 sm:text-sm"
-                    value={plan.backup}
-                    onChange={(event) => field("backup", event.target.value)}
-                  />
-                </label>
-                <label className="flex flex-col gap-1.5 text-sm font-semibold leading-5">
-                  <span>{t.plan.switchIf}</span>
-                  <Input
-                    disabled={locked}
-                    className="px-3 sm:text-sm"
-                    value={plan.switchIf}
-                    onChange={(event) => field("switchIf", event.target.value)}
-                  />
-                </label>
-              </div>
-              <label className="flex flex-col gap-1.5 text-sm font-semibold leading-5">
-                <span>{t.plan.note}</span>
-                <Textarea
-                  disabled={locked}
-                  className="min-h-20 px-3 py-2 leading-5 sm:text-sm"
-                  maxLength={2000}
-                  value={plan.note}
-                  onChange={(event) => field("note", event.target.value)}
-                />
-              </label>
-              {plan.changeReason && (
-                <p
-                  role="status"
-                  className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
-                >
-                  {t.plan.requestChange}: {plan.changeReason}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
-          <div className="flex flex-wrap gap-3">
+              {t.statuses[plan.status]}
+            </span>
             {plan.status === "confirmed" ? (
               <Button
                 type="button"
-                size="sm"
-                className="text-sm"
+                className="h-11 rounded-full px-5"
                 onClick={newVersion}
               >
                 {t.plan.edit}
@@ -293,8 +176,7 @@ function PlanEditor({
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="text-sm"
+                  className="h-10 rounded-full border-primary px-4 text-foreground"
                   disabled={locked}
                   onClick={() => commit("draft")}
                 >
@@ -302,8 +184,7 @@ function PlanEditor({
                 </Button>
                 <Button
                   type="button"
-                  size="sm"
-                  className="h-auto min-h-9 whitespace-normal py-2 text-sm"
+                  className="h-11 rounded-full px-6 text-lg"
                   disabled={locked}
                   onClick={() => commit("sent")}
                 >
@@ -312,128 +193,170 @@ function PlanEditor({
               </>
             )}
           </div>
+        }
+      />
+      <div className="grid items-start gap-5 px-4 pb-10 md:px-6 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)] xl:px-8">
+        <div className="min-w-0 space-y-5">
+          <Card className="border-0 shadow-[0_10px_20px_rgba(25,25,30,0.05)]">
+            <CardHeader className="p-5 pb-4">
+              <CardTitle>{t.plan.route}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
+              {universityField("university")}
+              <label className="min-w-0 space-y-1.5 text-sm font-semibold text-muted-foreground">
+                <span className="block">{t.plan.program}</span>
+                <Textarea
+                  disabled={locked}
+                  className="min-h-12 resize-y rounded-3xl px-4 py-3 text-foreground"
+                  rows={2}
+                  value={plan.program}
+                  onChange={(event) => field("program", event.target.value)}
+                />
+              </label>
+              <label className="min-w-0 space-y-1.5 text-sm font-semibold text-muted-foreground">
+                <span className="block">{t.plan.schedule}</span>
+                <Input
+                  disabled={locked}
+                  className="h-12 rounded-full text-foreground"
+                  value={plan.schedule}
+                  onChange={(event) => field("schedule", event.target.value)}
+                />
+              </label>
+              <label className="min-w-0 space-y-1.5 text-sm font-semibold text-muted-foreground">
+                <span className="block">{t.plan.topik}</span>
+                <Input
+                  disabled={locked}
+                  className="h-12 rounded-full text-foreground"
+                  value={plan.topik}
+                  onChange={(event) => field("topik", event.target.value)}
+                />
+              </label>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-[0_10px_20px_rgba(25,25,30,0.05)]">
+            <CardHeader className="p-5 pb-4">
+              <CardTitle>{t.plan.whyTitle}</CardTitle>
+            </CardHeader>
+            <CardContent className="px-5 pb-5">
+              <label className="block space-y-1.5 text-sm font-semibold text-muted-foreground">
+                <span>{t.plan.why}</span>
+                <Textarea
+                  disabled={locked}
+                  className="min-h-28 rounded-2xl border-primary text-foreground"
+                  maxLength={2000}
+                  value={plan.why}
+                  onChange={(event) => field("why", event.target.value)}
+                />
+              </label>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-[0_10px_20px_rgba(25,25,30,0.05)]">
+            <CardHeader className="p-5 pb-4">
+              <CardTitle>{t.detail.backup}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
+              {universityField("backup")}
+              <label className="min-w-0 space-y-1.5 text-sm font-semibold text-muted-foreground">
+                <span className="block">{t.detail.switchIf}</span>
+                <Input
+                  disabled={locked}
+                  className="h-12 rounded-full text-foreground"
+                  value={plan.switchIf}
+                  onChange={(event) => field("switchIf", event.target.value)}
+                />
+              </label>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-[0_10px_20px_rgba(25,25,30,0.05)]">
+            <CardHeader className="p-5 pb-4">
+              <CardTitle>{t.plan.note}</CardTitle>
+            </CardHeader>
+            <CardContent className="px-5 pb-5">
+              <label className="block space-y-1.5 text-sm font-semibold text-muted-foreground">
+                <span>{t.forms.message}</span>
+                <Textarea
+                  disabled={locked}
+                  className="min-h-14 rounded-2xl text-foreground"
+                  maxLength={2000}
+                  value={plan.note}
+                  onChange={(event) => field("note", event.target.value)}
+                />
+              </label>
+            </CardContent>
+          </Card>
+          {plan.changeReason && (
+            <p
+              role="status"
+              className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+            >
+              {t.plan.requestChange}: {plan.changeReason}
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
         </div>
         <aside className="min-w-0">
-          <h2 className="mb-3 text-xs font-bold uppercase text-primary-hover">
+          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
             {t.plan.previewTitle}
           </h2>
-          <div className="rounded-4xl border-6 border-foreground bg-card p-4 sm:p-6">
-            <p className="mb-3 flex items-center gap-1 text-sm font-semibold text-primary-hover">
-              <ArrowLeft aria-hidden="true" className="size-4" />
-              {t.plan.consultation}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-lg font-semibold leading-6">
-                {t.plan.title}
-              </h3>
-              <Badge variant={plan.status === "confirmed" ? "success" : "tint"}>
+          <div className="space-y-3 rounded-[2rem] border border-input p-4">
+            <h3 className="mb-4 text-2xl font-bold">{t.plan.title}</h3>
+            <Card className="gap-2 border-0 p-4">
+              <Badge
+                variant={plan.status === "confirmed" ? "success" : "tint"}
+                className="rounded-full text-xs"
+              >
                 {plan.status === "confirmed"
                   ? t.statuses.confirmed
                   : plan.status === "changeRequested"
                     ? t.statuses.changeRequested
                     : t.plan.toConfirm}
               </Badge>
-            </div>
-            <div className="mt-3 rounded-xl bg-primary-tint/70 p-3">
-              <h4 className="text-sm font-semibold leading-5">
+              <h4 className="text-lg font-bold wrap-anywhere">
                 {plan.university || "—"}
               </h4>
-              <p className="mt-2 text-xs leading-4.5 text-muted-foreground">
+              <p className="text-sm leading-5 text-muted-foreground wrap-anywhere">
                 {plan.program}
               </p>
-              <p className="mt-1 text-xs font-semibold leading-4.5 text-primary-hover">
-                {plan.schedule} · TOPIK {plan.topik}
+              <p className="text-sm leading-5 font-semibold wrap-anywhere">
+                {plan.schedule} · {t.detail.topik} {plan.topik}
               </p>
-            </div>
-            <h4 className="mt-4 text-xs font-bold uppercase text-primary-hover">
-              {t.plan.whyRoute}
-            </h4>
-            <ul className="mt-2 list-disc space-y-1 pl-4 text-sm leading-5 text-foreground/80">
-              {whyLines.map((line, index) => (
-                <li key={index}>{line.replace(/^[•*-]\s*/, "")}</li>
-              ))}
-            </ul>
-            <p className="mt-3 text-sm leading-5 text-muted-foreground">
-              {t.detail.backup}: {plan.backup} · {plan.switchIf}
-            </p>
-            {plan.note && <p className="mt-3 text-sm leading-5">{plan.note}</p>}
+            </Card>
+            <Card className="border-0 p-4">
+              <h4 className="text-xs font-bold uppercase text-primary">
+                {t.plan.whyRoute}
+              </h4>
+              <ul className="mt-2 list-disc space-y-2 pl-4 text-sm leading-5">
+                {whyLines.map((line, index) => (
+                  <li key={index}>{line.replace(/^[•*-]\s*/, "")}</li>
+                ))}
+              </ul>
+            </Card>
+            <Card className="border-0 p-4">
+              <p className="text-sm text-muted-foreground">{t.detail.backup}</p>
+              <p className="font-semibold wrap-anywhere">
+                {plan.backup || "—"}
+              </p>
+            </Card>
             <Button
               type="button"
-              disabled={plan.status !== "sent"}
-              className="mt-4 h-auto min-h-9 w-full whitespace-normal px-3 py-2 text-sm leading-5"
-              onClick={() => commit("confirmed")}
+              className="h-auto min-h-11 w-full rounded-full px-4 py-2 text-lg whitespace-normal"
             >
               {plan.status === "confirmed" ? t.plan.confirmed : t.plan.confirm}
             </Button>
             <Button
               type="button"
-              disabled={plan.status !== "sent"}
-              variant="app-text"
-              className="mt-2 h-auto p-0 text-sm text-primary-hover"
-              onClick={() => {
-                setChangeReason("");
-                setChanging(true);
-              }}
+              variant="outline"
+              className="h-auto min-h-10 w-full rounded-full border-primary px-4 py-2 text-foreground whitespace-normal"
             >
               {t.plan.requestChange}
             </Button>
-            {plan.status === "draft" && (
-              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                {t.plan.sendFirst}
-              </p>
-            )}
           </div>
         </aside>
       </div>
-      {changing && (
-        <Dialog open onOpenChange={setChanging}>
-          <DialogContent closeLabel={t.close}>
-            <DialogTitle className="pr-6 text-xl font-semibold">
-              {t.plan.requestChange}
-            </DialogTitle>
-            <DialogDescription className="mt-1 text-sm text-muted-foreground">
-              {student.name}
-            </DialogDescription>
-            <form
-              className="mt-4 space-y-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (!changeReason.trim()) {
-                  setError(t.plan.changeError);
-                  return;
-                }
-                commit("changeRequested", changeReason.trim());
-              }}
-            >
-              <label className="block space-y-2 text-sm font-semibold">
-                <span>{t.forms.changeReason}</span>
-                <Textarea
-                  required
-                  maxLength={2000}
-                  autoFocus
-                  value={changeReason}
-                  onChange={(event) => setChangeReason(event.target.value)}
-                />
-              </label>
-              {error && (
-                <p role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
-              )}
-              <div className="flex justify-end gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setChanging(false)}
-                >
-                  {t.cancel}
-                </Button>
-                <Button type="submit">{t.forms.submitChange}</Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      )}
     </main>
   );
 }

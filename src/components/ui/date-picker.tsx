@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
@@ -13,7 +14,7 @@ import {
 
 type DatePickerProps = Pick<
   ComponentProps<typeof Button>,
-  "id" | "ref" | "onBlur" | "aria-invalid" | "aria-describedby"
+  "id" | "ref" | "onBlur" | "aria-invalid" | "aria-describedby" | "className"
 > & {
   value: string;
   onChange: (value: string) => void;
@@ -32,6 +33,7 @@ export function DatePicker({
   clearLabel,
   locale,
   getMinDate,
+  className,
   ...triggerProps
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
@@ -57,7 +59,10 @@ export function DatePicker({
           type="button"
           variant="outline"
           data-empty={!date}
-          className="h-11 w-full justify-between border-input px-3 font-normal text-foreground data-[empty=true]:text-muted-foreground aria-invalid:border-destructive"
+          className={cn(
+            "h-11 w-full justify-between border-input px-3 font-normal text-foreground data-[empty=true]:text-muted-foreground aria-invalid:border-destructive",
+            className,
+          )}
           {...triggerProps}
         >
           {display}

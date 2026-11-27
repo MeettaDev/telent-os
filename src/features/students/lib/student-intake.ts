@@ -45,25 +45,29 @@ export function findIntakeMatches(students: Student[], contact: string) {
     : [];
 }
 
-export const studentIntakeFormSchema = z
-  .object({
-    channel: z.enum(intakeChannels),
-    name: z.string().trim().min(1, "required").max(120),
-    reachableContact: reachableContactSchema,
-    contactChannel: z.enum(contactChannels),
-    contactPerson: z.enum(contactPeople),
+export const studentContactSchema = z.object({
+  channel: z.enum(intakeChannels),
+  name: z.string().trim().min(1, "required").max(120, "nameTooLong"),
+  reachableContact: reachableContactSchema,
+  contactChannel: z.enum(contactChannels),
+  contactPerson: z.enum(contactPeople),
+  referralSource: z.enum(referralSources).or(z.literal("")).default(""),
+});
+
+export const studentIntakeFormSchema = studentContactSchema
+  .extend({
     owner: z.enum(["H", "N"]),
-    referralSource: z.enum(referralSources).or(z.literal("")),
-    status: z.enum(consultationStatuses),
-    scheduledDate: z.string(),
-    scheduledTime: z.string(),
-    completedDate: z.string(),
-    outcome: z.string().trim().max(200),
-    goal: z.string().trim().max(200),
-    nextAction: z.string().trim().max(200),
+    status: z.enum(consultationStatuses).default("inquiry"),
+    scheduledDate: z.string().default(""),
+    scheduledTime: z.string().default(""),
+    completedDate: z.string().default(""),
+    outcome: z.string().trim().max(200).default(""),
+    goal: z.string().trim().max(200).default(""),
+    nextAction: z.string().trim().max(200).default(""),
     dueDate: z
       .union([z.literal(""), dateSchema], { error: "invalidDate" })
-      .refine((date) => !date || date >= yangonToday(), "pastDueDate"),
+      .refine((date) => !date || date >= yangonToday(), "pastDueDate")
+      .default(""),
     googleEmail: z
       .string()
       .trim()
@@ -71,9 +75,10 @@ export const studentIntakeFormSchema = z
       .refine(
         (value) => !value || z.email().safeParse(value).success,
         "invalidEmail",
-      ),
-    note: z.string().trim().max(1000),
-    separateReason: z.string().trim().max(500),
+      )
+      .default(""),
+    note: z.string().trim().max(1000).default(""),
+    separateReason: z.string().trim().max(500, "reasonTooLong").default(""),
   })
   .superRefine((values, context) => {
     if (values.status === "scheduled") {
@@ -106,4 +111,6 @@ export const studentIntakeFormSchema = z
     }
   });
 
-export type StudentIntakeForm = z.infer<typeof studentIntakeFormSchema>;
+export type StudentIntakeInput = z.input<typeof studentIntakeFormSchema>;
+export type StudentIntakeForm = z.output<typeof studentIntakeFormSchema>;
+export type StudentContact = z.input<typeof studentContactSchema>;

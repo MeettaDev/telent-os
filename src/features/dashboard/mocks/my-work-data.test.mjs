@@ -3,6 +3,7 @@ import test from "node:test";
 
 import en from "../../../common/i18n/dictionaries/en.json" with { type: "json" };
 import my from "../../../common/i18n/dictionaries/my.json" with { type: "json" };
+import { students } from "../../students/mocks/students-data.ts";
 import {
   appActivities,
   todayMetrics,
@@ -34,13 +35,20 @@ test("Dictionaries have matching keys; Today preserves translation placeholders"
 test("Today fixtures keep seven unique tasks with overdue work first", () => {
   assert.equal(todayTasks.length, 7);
   assert.equal(new Set(todayTasks.map(({ id }) => id)).size, 7);
-  assert.equal(todayTasks[0].overdue, true);
-  assert.equal(todayTasks.filter(({ overdue }) => overdue).length, 1);
+  assert.deepEqual(
+    todayTasks.map(({ group }) => group),
+    ["overdue", "today", "today", "today", "today", "tomorrow", "noAction"],
+  );
   assert.deepEqual(
     todayMetrics.map(({ count }) => count),
     [3, 4, 2, 1],
   );
-  assert.equal(todayTasks.filter(({ missingDate }) => missingDate).length, 1);
+  for (const task of todayTasks.filter(({ studentId }) => studentId)) {
+    assert.equal(
+      students.find(({ id }) => id === task.studentId)?.name,
+      task.student,
+    );
+  }
 });
 
 test("Every visible fixture has English and Myanmar copy", () => {

@@ -40,7 +40,13 @@ const items = [
   },
 ] as const;
 
-function SidebarContent({ mobile = false }: { mobile?: boolean }) {
+function SidebarContent({
+  mobile = false,
+  inset = false,
+}: {
+  mobile?: boolean;
+  inset?: boolean;
+}) {
   const { dictionary, locale } = useLocale();
   const pathname = usePathname();
   const waiting = useStudentsStore((state) => waitingCount(state.messages));
@@ -49,7 +55,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col p-4">
+    <div className={cn("flex h-full min-h-0 flex-col p-4", inset && "p-3.5")}>
       <div className="flex min-h-12 items-center justify-between px-2">
         <Link
           href="/"
@@ -57,10 +63,20 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
           aria-label={dictionary.sidebar.today}
           className="flex items-baseline gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="text-2xl font-bold tracking-tight text-primary-hover">
+          <span
+            className={cn(
+              "text-2xl font-bold tracking-tight text-primary-hover",
+              inset && "text-primary",
+            )}
+          >
             {dictionary.appName}
           </span>
-          <span className="text-base font-semibold text-muted-foreground">
+          <span
+            className={cn(
+              "text-base font-semibold text-muted-foreground",
+              inset && "rounded-full bg-muted px-2.5 py-1 text-xs",
+            )}
+          >
             OS
           </span>
         </Link>
@@ -78,7 +94,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
       </div>
       <nav
         aria-label={dictionary.sidebar.workspace}
-        className="mt-6 flex-1 space-y-1 overflow-y-auto"
+        className={cn("mt-6 flex-1 space-y-1 overflow-y-auto", inset && "mt-2")}
       >
         {items.map(({ key, href, icon: Icon, count }) => {
           const badgeCount = key === "inbox" ? waiting || undefined : count;
@@ -94,8 +110,11 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                inset && "min-h-12 rounded-full px-4",
                 active
-                  ? "bg-primary-tint font-semibold text-primary-hover"
+                  ? inset
+                    ? "bg-muted font-semibold text-foreground"
+                    : "bg-primary-tint font-semibold text-primary-hover"
                   : "text-foreground/80 hover:bg-muted",
               )}
             >
@@ -113,7 +132,15 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
               {badgeCount !== undefined && (
                 <Badge
                   variant={key === "inbox" ? "default" : "secondary"}
-                  className="ml-auto min-w-6 rounded-full px-2 py-0 text-sm"
+                  className={cn(
+                    "ml-auto min-w-6 rounded-full px-2 py-0 text-sm",
+                    inset &&
+                      (pathname === "/"
+                        ? "bg-transparent text-foreground"
+                        : active
+                          ? "bg-primary-tint text-primary-hover"
+                          : "bg-muted text-muted-foreground"),
+                  )}
                 >
                   {badgeCount}
                 </Badge>
@@ -147,7 +174,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
   );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ inset = false }: { inset?: boolean }) {
   const { dictionary } = useLocale();
   const { isMobileSidebarOpen, closeMobileSidebar } = useAppShellStore();
   const opener = useRef<HTMLElement | null>(null);
@@ -172,8 +199,13 @@ export function AppSidebar() {
 
   return (
     <>
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 border-r bg-card lg:block">
-        <SidebarContent />
+      <aside
+        className={cn(
+          "sticky top-0 hidden h-dvh w-60 shrink-0 border-r bg-card lg:block",
+          inset && "top-4 ml-4 h-[calc(100dvh-2rem)] w-58 rounded-3xl border-0",
+        )}
+      >
+        <SidebarContent inset={inset} />
       </aside>
       <Sheet
         open={isMobileSidebarOpen}

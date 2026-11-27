@@ -500,6 +500,21 @@
   },
   "today": {
     "title": "Today",
+    "date": "2026-10-01  Thu",
+    "groups": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "noAction": "No next action"
+    },
+    "reviewOwner": {
+      "title": "Nway Nway is reviewing this",
+      "detail": "Ko Thura Zaw · MOFA papers step 3",
+      "activity": "Claimed 12 min ago · last activity 3 min ago",
+      "message": "Message Nway Nway",
+      "takeOver": "Take over"
+    },
+    "noViberNumber": "This student has no callable Viber number on file.",
     "description": "Thu, 1 Oct 2026 · 7 things need you · sorted by what the app promised the student",
     "searchPlaceholder": "Search a student, phone or NRC",
     "addStudent": "Add student",
@@ -565,21 +580,21 @@
       },
       "chat": {
         "due": "Today",
-        "dueNote": "waiting 5h",
+        "dueNote": "Waiting 5h",
         "title": "Reply in Chat",
         "detail": "“When do I register for TOPIK?”",
         "action": "Reply"
       },
       "plan": {
         "due": "Tomorrow",
-        "dueNote": "Promised Oct 02",
+        "dueNote": "Promised Oct 2",
         "title": "Write Your plan",
         "detail": "Consultation Sep 30 · Kunjang or Busan",
         "action": "Open plan"
       },
       "next": {
         "due": "—",
-        "dueNote": "no date",
+        "dueNote": "No date",
         "title": "Set the next action",
         "detail": "Plan confirmed Sep 24 · nothing scheduled",
         "action": "Set next action"
@@ -632,6 +647,7 @@
     "openStudent": "Open student",
     "back": "Back to conversations",
     "compose": "Write in English or Burmese…",
+    "send": "Send",
     "emptyFilter": "No conversations in this filter.",
     "selectThread": "Select a conversation to open it.",
     "actions": {
@@ -641,22 +657,22 @@
     },
     "fileRequest": {
       "description": "Creates a task for the student and a card in Chat",
-      "whatFile": "1 · What file",
+      "whatFile": "File",
       "fatherDetail": "Legalized papers · NRC copy",
       "other": "Other file…",
       "otherHint": "Enter a name, e.g. university certificate copy",
       "fileName": "File name",
       "alreadyOpen": "Already open. Sending this again updates the existing task with the new due date and message.",
-      "checklist": "2 · Checklist the student will tick",
+      "checklist": "Checklist",
       "checklistVersion": "Checklist · v2",
       "clear": "Clear, with all edges visible",
       "colorCopy": "Color copy of the passport photo page",
-      "date": "3 · Due date",
+      "date": "Due date",
       "inDays": "In {days} days · {date}",
       "pickDate": "Pick a date",
-      "message": "4 · Message (optional)",
+      "message": "Message",
       "defaultMessage": "Please add the back side too. Put both sides on one page. A phone photo is fine.",
-      "preview": "Student preview · sender “Meetta”",
+      "preview": "Student sees",
       "previewTitle": "Add {file}",
       "tapUpload": "Tap to upload",
       "open": "Open",
@@ -697,6 +713,7 @@
     "times": {
       "hours": "5h",
       "yesterday": "Yesterday",
+      "oct1": "Oct 1",
       "sep30": "Sep 30"
     },
     "incoming": {
@@ -707,9 +724,10 @@
       "su": "The hospital says results on Friday."
     },
     "initialReply": "Hi May Zin! Your father’s NRC needs the back side too. Please add both sides on one page.",
-    "initialReplyMeta": "Meetta · Oct 1 08:40 · sent with the Fix",
+    "initialReplyMeta": "Meetta · 08:40 · sent with the Fix",
     "initialFile": "Father’s NRC · both sides",
-    "initialFileDetail": "Opens in the student app as a task · due Oct 5",
+    "initialFileAction": "Add the fix",
+    "initialFileDetail": "Opens in the student app as a task · due Oct 3",
     "received": "Father’s NRC v2 received · in Nway Nway’s review",
     "guides": {
       "passport": {
@@ -745,6 +763,7 @@
     "search": "Search a university or program",
     "add": "Add university",
     "edit": "Edit (new version)",
+    "editAction": "Edit",
     "addProgram": "Add program",
     "addDescription": "Create a university record for an intake.",
     "nextVersion": "Save this update as record v{version}.",
@@ -766,7 +785,7 @@
       "all": "All",
       "hasStudents": "Has students",
       "recheck": "Re-check due",
-      "draft": "Not posted / draft"
+      "draft": "Draft"
     },
     "columns": {
       "school": "School",
@@ -788,9 +807,15 @@
     },
     "until": "Until {date}",
     "from": "From {date}",
-    "notPosted": "Not posted yet",
+    "notPosted": "Not posted",
     "pending": "Guideline pending",
-    "backupCount": "{count} backup",
+    "backupCount": "{count} as backup",
+    "oneStudent": "{count} student",
+    "studentCount": "{count} students",
+    "oneSeat": "{count} seat",
+    "seatCount": "{count} seats",
+    "topikLevel": "TOPIK {level}",
+    "bankProofWaived": "Bank proof waived",
     "backup": "Backup choice",
     "empty": "No universities match your search and filter.",
     "fields": {
@@ -832,9 +857,10 @@
     "contacts": {
       "office": "Office",
       "channel": "Channel",
-      "lastContact": "Last contact"
+      "lastContact": "Last"
     },
-    "programCount": "Programs · {count}",
+    "programCount": "{count} programs",
+    "oneProgram": "{count} program",
     "programs": "Programs",
     "noPrograms": "No programs yet.",
     "noStudents": "No students linked to this university.",
@@ -844,10 +870,11 @@
     "source": "Source: {source}",
     "recheckBy": "Re-check by {date}",
     "version": "Record v{version}",
-    "datesTitle": "Dates for {intake} intake",
+    "datesTitle": "{intake} intake",
     "journeyReference": "Journey date reference",
     "journey": {
       "window": "③ University application",
+      "deadline": "③ by {date}",
       "interview": "③ Step 3",
       "result": "③ Step 4",
       "tuition": "③ Step 5",
@@ -857,23 +884,73 @@
     "dateNotice": "Changing a date creates record v{version}. Preview date changes and the {count} linked students before saving.",
     "requirementsTitle": "Requirements",
     "documentReference": "Student document reference",
-    "contactsTitle": "University contacts",
-    "internal": "Internal only",
-    "history": "Record history",
+    "contactsTitle": "Contacts",
+    "internal": "Internal",
+    "history": "History",
     "noHistory": "No recorded changes yet."
   },
   "studentWorkspace": {
+    "consultation": {
+      "overview": "Overview",
+      "profile": "Profile",
+      "legalization": "Legalization papers",
+      "inquiry": "Inquiry",
+      "notBooked": "Not booked",
+      "bookedOn": "Booked · {date}",
+      "edit": "Edit",
+      "book": "Book consultation",
+      "bookButton": "Book",
+      "bookFirst": "Book the first consultation",
+      "reschedule": "Reschedule",
+      "call": "Consultation call",
+      "record": "Record outcome",
+      "recordStep": "Record the outcome",
+      "saveOutcome": "Save outcome",
+      "planToWrite": "Plan to write",
+      "planDue": "Plan due {date}",
+      "openPlan": "Open plan editor",
+      "writeFor": "Write Your plan for {student}",
+      "duration": "40 min",
+      "studentPreview": "Student sees",
+      "with": "With",
+      "activity": "Activity",
+      "contactIntake": "Contact and intake",
+      "contact": "Contact",
+      "studentId": "Student ID",
+      "editContact": "Edit contact and intake",
+      "heardFrom": "Heard from",
+      "next": "Next",
+      "nextAction": "Next action",
+      "hold": "Hold the consultation",
+      "followUp": "Follow up on program choice",
+      "attendance": "Did it happen?",
+      "date": "Date",
+      "programInterest": "Program interest",
+      "viewNotes": "View notes",
+      "outcomeSaved": "Outcome saved",
+      "sessionHeld": "Completed {date}",
+      "addedBy": "added {date} by {author}",
+      "created": "Added by {author} · came in by {channel}",
+      "duplicatePhone": "This phone belongs to an existing record.",
+      "outcomes": {
+        "ready": "Ready for a plan",
+        "needsHelp": "Needs help choosing",
+        "notNow": "Not now",
+        "notEligible": "Not eligible"
+      }
+    },
     "intake": {
-      "intro": "Start with a name and a reachable contact. Save the student even if their route or Google email is not ready.",
+      "intro": "Enter the student's name, phone number, and intake details.",
       "channel": "Intake channel",
-      "name": "Student name",
-      "reachableContact": "Reachable contact",
+      "cameInBy": "Came in by",
+      "name": "Name",
+      "reachableContact": "Phone",
       "contactChannel": "Contact channel",
       "contactPerson": "Contact person",
       "assignedTo": "Assigned to",
-      "referralSource": "How did they hear about Meetta? · optional",
+      "referralSource": "Heard about Meetta from",
       "heardVia": "How they heard about Meetta",
-      "status": "Consultation status",
+      "status": "Consultation",
       "scheduleHint": "Scheduled requires a consultation date and time before saving.",
       "scheduledDate": "Consultation date",
       "scheduledTime": "Consultation time · Yangon",
@@ -890,9 +967,10 @@
       "dueDate": "Due date",
       "pickDate": "Pick a date",
       "clearDate": "Clear date",
-      "googleEmail": "Google email for app sign-in · optional",
-      "note": "Notes · optional",
-      "consultationNote": "Consultation note · optional",
+      "googleEmail": "Google email",
+      "note": "Notes",
+      "consultationNote": "Consultation note",
+      "optional": "optional",
       "notePlaceholder": "Add a short note",
       "emailHint": "Google email is optional. You can save now and add it later.",
       "completedEmailHint": "No Google email is needed to save this consultation. The student can connect an account later.",
@@ -908,17 +986,19 @@
       "save": "Save student",
       "saveOutcome": "Save student & outcome",
       "saving": "Saving…",
-      "matchTitle": "Check a possible existing record",
+      "matchTitle": "Possible existing record",
+      "sameContact": "Same contact",
+      "firstContact": "first contact by",
       "matchIntro": "The contact you entered is already used on a student record. Check before creating another record.",
       "matchWarning": "Possible match does not confirm identity",
       "matchWarningDetail": "Family members may share a phone or Viber contact. Never merge records or expose app access automatically.",
       "recordId": "Student {id}",
       "existingHistory": "Previous web / staff-assisted history is kept on this record.",
-      "openExisting": "Open existing record",
-      "differentStudent": "Is this a different student?",
+      "openExisting": "Open record",
+      "differentStudent": "Different student?",
       "separateIntro": "Create a separate record for {name} only after checking who uses this contact. Keep the existing student's history unchanged.",
       "newStudent": "the new student",
-      "separateReason": "Reason for a separate record · required",
+      "separateReason": "Reason",
       "reasonPlaceholder": "Explain why this is a different student",
       "reasonHint": "A reason is required before “Save as new student” becomes available.",
       "saveSeparate": "Save as new student",
@@ -942,10 +1022,14 @@
       "statuses": {
         "inquiry": "Inquiry only",
         "scheduled": "Scheduled",
-        "completed": "Completed"
+        "completed": "Completed",
+        "noShow": "No-show",
+        "moved": "Moved"
       },
       "errors": {
         "required": "This field is required.",
+        "nameTooLong": "Enter a name of 120 characters or fewer.",
+        "reasonTooLong": "Enter a reason of 500 characters or fewer.",
         "invalidDate": "Enter a valid date.",
         "pastDueDate": "Choose today or a later date.",
         "invalidTime": "Enter a valid time.",
@@ -1002,6 +1086,18 @@
       "new": "Not linked yet"
     },
     "now": {
+      "bookConsultation": {
+        "title": "Book the first consultation",
+        "detail": ""
+      },
+      "holdConsultation": {
+        "title": "Hold the consultation",
+        "detail": ""
+      },
+      "consultationFollowUp": {
+        "title": "Follow up on program choice",
+        "detail": ""
+      },
       "mofa": {
         "title": "MOFA papers v2 · step 3",
         "detail": "2 days over promise"
@@ -1064,11 +1160,11 @@
       "career": "Study & career"
     },
     "stageNotes": {
-      "consultation": "Done · Sep 25",
-      "documents": "Now · by Dec 15",
+      "consultation": "Sep 25",
+      "documents": "by Dec 15",
       "application": "by Jan 15",
-      "visa": "Feb 15",
-      "arrival": "Mar 2",
+      "visa": "by Feb 15",
+      "arrival": "by Mar 2",
       "career": ""
     },
     "statuses": {
@@ -1140,7 +1236,8 @@
       "december": "Dec",
       "view": "View",
       "remind": "Remind",
-      "request": "Request"
+      "request": "Request",
+      "reviewHeading": "Review father’s NRC"
     },
     "documents": {
       "legalized": {
@@ -1180,6 +1277,13 @@
       "certificate": "Certificate"
     },
     "history": {
+      "consultationBooked": "Consultation booked",
+      "consultationRescheduled": "Consultation rescheduled",
+      "consultationCompleted": "Consultation completed",
+      "consultationOutcome": "Outcome",
+      "consultationNoShow": "Consultation no-show",
+      "consultationMoved": "Consultation moved",
+      "contactUpdated": "Contact and intake updated",
       "reviewApproved": "Paper approved",
       "reviewFix": "Paper sent back for changes",
       "planSaved": "Plan draft saved",
@@ -1213,8 +1317,6 @@
       "file": "Document",
       "note": "Note",
       "requestFile": "Request file",
-      "changeReason": "What should change?",
-      "submitChange": "Request change",
       "optional": "Optional",
       "noOwner": "Unassigned",
       "ownerNeeded": "Choose an owner for Meetta’s turn."
@@ -1260,9 +1362,9 @@
       "fixPreview": "{paper}: {reason}",
       "fixDialog": {
         "title": "Send {paper} back to {student}?",
-        "reason": "Reason · required",
+        "reason": "Reason",
         "other": "Other…",
-        "message": "Message · edit the template",
+        "message": "Message",
         "language": "Message language",
         "effects": "What happens",
         "app": "App",
@@ -1329,16 +1431,16 @@
       "program": "Program · visa",
       "schedule": "Start · apply by",
       "topik": "TOPIK needed",
-      "whyTitle": "Why this route · what if",
+      "whyTitle": "Why this route",
       "studentReads": "The student reads this in the app",
-      "why": "Why this route (2–3 lines)",
+      "why": "2–3 lines",
       "backup": "Backup university",
       "switchIf": "Switch to backup if",
       "note": "Note to the student",
       "defaultWhy": "• You can apply with TOPIK 2\n• Root-industry program with job links in Jeonbuk\n• Bank proof 48M MMK fits your family plan",
       "defaultSwitch": "No TOPIK 2 by the December result",
       "defaultNote": "Start your passport copy this week — it opens your Documents step.",
-      "previewTitle": "What the student sees",
+      "previewTitle": "Student sees",
       "consultation": "Consultation",
       "whyRoute": "Why this route",
       "previewSchedule": "Start Mar 2027 · Apply by Jan 15 · TOPIK 2",
@@ -1347,13 +1449,26 @@
       "save": "Save draft",
       "send": "Send to {student}",
       "edit": "Edit new version",
-      "sendFirst": "Send the plan to enable confirmation.",
       "saved": "Draft saved",
       "sent": "Plan sent to student",
       "confirmed": "Plan confirmed",
-      "changeRequested": "Change requested",
-      "sendError": "Complete university, program, start/apply-by, TOPIK, and why this route before sending.",
-      "changeError": "Explain the change you need."
+      "sendError": "Complete university, program, start/apply-by, TOPIK, and why this route before sending."
+    },
+    "documentGroups": {
+      "toSend": "To do · student",
+      "topikLevel": "Level 2",
+      "bankDetail": "Student reported 30M of 48M · Sep 26 (father’s account)"
+    },
+    "nextAction": {
+      "title": "Next action",
+      "what": "What",
+      "office": "Office / university",
+      "suggestions": {
+        "file": "Send a file",
+        "reply": "Reply in Chat",
+        "call": "Book a call",
+        "university": "Wait for university"
+      }
     }
   }
 }

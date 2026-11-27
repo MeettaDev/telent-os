@@ -1,14 +1,15 @@
 "use client";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { inboxThreads, isWaiting } from "@/features/inbox/mocks/inbox-data";
 import { OwnerAvatar } from "@/features/students/components/StudentStatus";
 import { useStudentsStore } from "@/features/students/stores/students-store";
-import type { Student, StudentPlan } from "@/features/students/types/student";
+import {
+  consultationOutcomes,
+  type Student,
+  type StudentPlan,
+} from "@/features/students/types/student";
 import { useLocale } from "@/providers/locale-provider";
 import { cn } from "@/lib/utils";
 
@@ -30,15 +31,14 @@ export function StudentDetailSidebar({
   const { dictionary, locale } = useLocale();
   const t = dictionary.studentWorkspace;
   const router = useRouter();
-  const messages = useStudentsStore((state) => state.messages[student.id]);
-  const waiting = useStudentsStore((state) =>
-    isWaiting(student.id, state.messages),
-  );
   const history = useStudentsStore((state) => state.history[student.id]);
-  const latest = messages?.at(-1);
   const intake = student.intake;
   const copy = t.intake;
   const consultation = intake?.consultation;
+  const outcome =
+    consultation?.status === "completed"
+      ? consultationOutcomes.find((value) => value === consultation.outcome)
+      : undefined;
   const intakeFields = intake &&
     consultation && [
       [copy.channel, copy.channels[intake.channel]],
@@ -52,7 +52,12 @@ export function StudentDetailSidebar({
         : consultation.status === "completed"
           ? [
               [copy.completedDate, consultation.date],
-              [copy.outcome, consultation.outcome],
+              [
+                copy.outcome,
+                outcome
+                  ? t.consultation.outcomes[outcome]
+                  : consultation.outcome,
+              ],
               [copy.goal, consultation.goal],
             ]
           : []),
@@ -63,11 +68,12 @@ export function StudentDetailSidebar({
       [copy.googleEmail, intake.googleEmail],
       [
         consultation.status === "completed" ? copy.consultationNote : copy.note,
-        intake.note,
+        consultation.status === "completed"
+          ? (consultation.notes ?? intake.note)
+          : intake.note,
       ],
       [copy.separateReason, intake.separateReason],
     ];
-  const thread = inboxThreads.find(({ id }) => id === student.id);
   const confirmed = history?.find((entry) => entry.kind === "planConfirmed");
   const confirmedDate = new Intl.DateTimeFormat(
     locale === "my" ? "my-MM" : "en-US",
@@ -109,31 +115,31 @@ export function StudentDetailSidebar({
   return (
     <aside className="min-w-0 space-y-5">
       {intakeFields && (
-        <Card>
-          <CardHeader>
+        <Card className="border-0">
+          <CardHeader className="px-5 pt-5 pb-3">
             <CardTitle>{t.stages.consultation}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <dl className="divide-y">
+          <CardContent className="px-5 pb-5">
+            <dl className="space-y-3">
               {intakeFields
                 .filter(([, value]) => value)
                 .map(([label, value]) => (
                   <div
                     key={label}
-                    className="grid grid-cols-3 gap-3 py-3 first:pt-0 last:pb-0"
+                    className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-2"
                   >
                     <dt className="text-xs font-semibold text-muted-foreground">
                       {label}
                     </dt>
-                    <dd className="col-span-2 break-words text-sm">{value}</dd>
+                    <dd className="break-words text-sm">{value}</dd>
                   </div>
                 ))}
             </dl>
           </CardContent>
         </Card>
       )}
-      <Card>
-        <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
+      <Card className="border-0">
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 px-5 pt-5 pb-3">
           <CardTitle>
             {t.detail.yourPlan} · v{plan.version}
           </CardTitle>
@@ -146,19 +152,19 @@ export function StudentDetailSidebar({
             {plan.status === "draft" ? t.detail.writePlan : t.detail.editPlan} ›
           </Button>
         </CardHeader>
-        <CardContent>
-          <dl className="divide-y">
+        <CardContent className="px-5 pb-5">
+          <dl className="space-y-3">
             {fields.map(([label, value]) => (
               <div
                 key={label}
-                className="grid grid-cols-3 gap-3 py-3 first:pt-0 last:pb-0"
+                className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-2"
               >
-                <dt className="text-xs font-semibold uppercase text-primary-hover">
+                <dt className="text-[11px] font-bold uppercase text-muted-foreground">
                   {label}
                 </dt>
                 <dd
                   className={cn(
-                    "col-span-2 break-words text-sm leading-5",
+                    "break-words text-sm leading-5",
                     label === t.detail.status &&
                       plan.status === "confirmed" &&
                       "text-emerald-700 dark:text-emerald-300",
@@ -171,25 +177,22 @@ export function StudentDetailSidebar({
           </dl>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
+      <Card className="border-0">
+        <CardHeader className="px-5 pt-5 pb-3">
           <CardTitle>{t.detail.people}</CardTitle>
         </CardHeader>
-        <CardContent className="divide-y">
+        <CardContent className="space-y-3 px-5 pb-5">
           {(
             [
               { owner: "H", name: "Hsu Wai", role: t.detail.caseOwner },
               { owner: "N", name: "Nway Nway", role: t.detail.reviewer },
             ] as const
           ).map((person) => (
-            <div
-              key={person.owner}
-              className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
-            >
+            <div key={person.owner} className="flex items-start gap-3">
               <OwnerAvatar owner={person.owner} />
               <div>
                 <h3 className="font-semibold">{person.name}</h3>
-                <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                <p className="text-xs leading-5 text-muted-foreground">
                   {person.role}
                 </p>
               </div>
@@ -197,70 +200,16 @@ export function StudentDetailSidebar({
           ))}
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader className="flex-row items-center justify-between gap-2">
-          <CardTitle>{t.detail.chat}</CardTitle>
-          {waiting && <Badge variant="tint">{t.detail.unread}</Badge>}
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-xl bg-muted/50 p-3">
-            <p className="whitespace-pre-wrap break-words text-sm leading-5">
-              {latest?.text ??
-                (thread
-                  ? dictionary.inboxWorkspace.incoming[thread.key]
-                  : t.detail.noMessages)}
-            </p>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              {latest?.author ?? student.name} · {t.detail.chatMeta}
-            </p>
-          </div>
-          <Link
-            href={"/inbox?student=" + encodeURIComponent(student.id)}
-            className="mt-3 inline-block rounded-sm text-sm font-semibold text-primary-hover hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {t.detail.openConversation} ›
-          </Link>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex-row flex-wrap justify-between gap-2">
-          <CardTitle>{t.detail.services}</CardTitle>
-          <span className="text-xs font-semibold text-muted-foreground">
-            {t.detail.paidOutside}
-          </span>
-        </CardHeader>
-        <CardContent>
-          <dl className="divide-y">
-            {[
-              [t.detail.asked, t.detail.serviceRequest],
-              [t.detail.status, t.detail.serviceStatus],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="grid grid-cols-3 gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                <dt className="text-xs font-semibold uppercase text-primary-hover">
-                  {label}
-                </dt>
-                <dd className="col-span-2 text-sm leading-5">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex-row flex-wrap justify-between gap-2">
+      <Card className="border-0">
+        <CardHeader className="flex-row flex-wrap justify-between gap-2 px-5 pt-5 pb-3">
           <CardTitle>{t.detail.history}</CardTitle>
-          <span className="text-xs font-semibold text-muted-foreground">
-            {t.detail.historyNote}
-          </span>
         </CardHeader>
-        <CardContent>
-          <ol className="divide-y">
+        <CardContent className="px-5 pb-5">
+          <ol className="space-y-3">
             {(history ?? []).map((entry) => (
               <li
                 key={entry.id}
-                className="grid grid-cols-4 gap-3 py-3 first:pt-0"
+                className="grid grid-cols-[3rem_minmax(0,1fr)] gap-3"
               >
                 <time
                   dateTime={entry.at}
@@ -271,7 +220,7 @@ export function StudentDetailSidebar({
                     { month: "short", day: "numeric", timeZone: "Asia/Yangon" },
                   ).format(new Date(entry.at))}
                 </time>
-                <div className="col-span-3 text-sm leading-5">
+                <div className="text-sm leading-5">
                   {t.history[entry.kind]}
                   {entry.detail && (
                     <p className="mt-1 break-words text-muted-foreground">
@@ -292,7 +241,7 @@ export function StudentDetailSidebar({
               ).map((entry, index) => (
                 <li
                   key={index}
-                  className="grid grid-cols-4 gap-3 py-3 first:pt-0"
+                  className="grid grid-cols-[3rem_minmax(0,1fr)] gap-3"
                 >
                   <span className="text-xs font-semibold text-muted-foreground">
                     {new Intl.DateTimeFormat(
@@ -300,7 +249,7 @@ export function StudentDetailSidebar({
                       { month: "short", day: "numeric", timeZone: "UTC" },
                     ).format(new Date(entry.date + "T00:00:00Z"))}
                   </span>
-                  <p className="col-span-3 text-sm leading-5 text-foreground/80">
+                  <p className="text-sm leading-5 text-foreground/80">
                     {t.initialHistory[entry.key].replace(
                       "May Zin",
                       student.name,

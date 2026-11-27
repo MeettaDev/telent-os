@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { WorkspacePageHeader } from "@/common/components/WorkspacePageHeader";
+import { BookConsultationSheet } from "@/features/students/components/ConsultationSheets";
+import { intakeOwners } from "@/features/students/lib/student-intake";
 import {
   callDateLabel,
   dateLabel,
@@ -40,17 +42,38 @@ import { useLocale } from "@/providers/locale-provider";
 import { cn } from "@/lib/utils";
 import { inboxThreads, isWaiting, waitingCount } from "../mocks/inbox-data";
 import { InboxActionDialog } from "./InboxActionDialog";
-import { InboxCallSheet } from "./InboxCallSheet";
 import { InboxFileSheet } from "./InboxFileSheet";
 
 const filters = ["waiting", "all", "mine"] as const;
 const actions = ["file", "call", "guide"] as const;
+type ThreadKey = (typeof inboxThreads)[number]["key"];
+const avatarTones: Record<ThreadKey, string> = {
+  may: "bg-primary",
+  ko: "bg-orange-700",
+  thiri: "bg-green-700",
+  phyu: "bg-violet-600",
+  su: "bg-neutral-600",
+};
+const actionPill =
+  "h-auto min-h-9 rounded-full border border-transparent bg-muted px-3 py-1.5 text-sm font-medium whitespace-normal text-muted-foreground hover:bg-muted hover:text-foreground";
 
-function Avatar({ initials }: { initials: string }) {
+function Avatar({
+  initials,
+  tone,
+  className,
+}: {
+  initials: string;
+  tone?: ThreadKey;
+  className?: string;
+}) {
   return (
     <span
       aria-hidden="true"
-      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-tint text-base font-bold text-primary-hover"
+      className={cn(
+        "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
+        tone ? avatarTones[tone] : "bg-primary",
+        className,
+      )}
     >
       {initials}
     </span>
@@ -67,19 +90,19 @@ function Bubble({
   outgoing?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "w-fit max-w-11/12 rounded-2xl border px-4 py-3 text-sm leading-5",
-        outgoing
-          ? "self-end border-primary bg-primary text-primary-foreground"
-          : "border-border bg-card",
-      )}
-    >
-      <p className="whitespace-pre-wrap wrap-anywhere">{children}</p>
+    <div className={cn("w-[90%] space-y-1 self-start", outgoing && "self-end")}>
       <p
         className={cn(
-          "mt-2 text-xs",
-          outgoing ? "text-primary-foreground/90" : "text-muted-foreground",
+          "rounded-2xl px-4 py-3 text-[15px] leading-6 whitespace-pre-wrap wrap-anywhere",
+          outgoing ? "bg-primary-tint" : "bg-muted",
+        )}
+      >
+        {children}
+      </p>
+      <p
+        className={cn(
+          "text-[11px] text-muted-foreground",
+          outgoing && "text-right",
         )}
       >
         {meta}
@@ -92,26 +115,32 @@ function ActionCard({
   label,
   title,
   detail,
+  meta,
   children,
 }: {
   label: string;
   title: string;
   detail: string;
+  meta?: string;
   children?: ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        "w-full max-w-85 self-end rounded-2xl border bg-card p-4 text-sm",
-        children && "border-primary",
+    <div className="w-full max-w-[min(90%,22.5rem)] self-end">
+      <div className="space-y-1 rounded-2xl border border-primary bg-card p-4 text-sm">
+        <p className="text-[11px] font-bold uppercase text-primary-hover">
+          {label}
+        </p>
+        <p className="text-base font-semibold wrap-anywhere">{title}</p>
+        <p className="whitespace-pre-wrap text-muted-foreground wrap-anywhere">
+          {detail}
+        </p>
+        {children}
+      </div>
+      {meta && (
+        <p className="mt-1 text-right text-[11px] text-muted-foreground">
+          {meta}
+        </p>
       )}
-    >
-      <p className="text-xs font-bold uppercase text-primary-hover">{label}</p>
-      <p className="mt-2 font-semibold wrap-anywhere">{title}</p>
-      <p className="mt-2 whitespace-pre-wrap text-muted-foreground wrap-anywhere">
-        {detail}
-      </p>
-      {children}
     </div>
   );
 }
@@ -189,7 +218,7 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
   };
   useEffect(() => {
     const panel = transcript.current;
-    if (panel) panel.scrollTop = sentCount ? panel.scrollHeight : 0;
+    if (panel) panel.scrollTop = panel.scrollHeight;
   }, [hydrated, id, latestMessage, sentCount, showThread]);
 
   function select(student: Student) {
@@ -231,41 +260,27 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
 
   if (!hydrated) return <PageSkeleton kind="inbox" />;
 
-  const details = student && (
+  const summary =
+    student &&
+    [
+      student.school || studentPlan?.university,
+      studentPlan?.program,
+      student.start &&
+        dateLabel(student.start, locale, s.today, s.noDate, true),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  const nextAction = student && (
     <>
-      <p className="text-xs leading-5 text-muted-foreground wrap-anywhere">
-        {student.school} · {studentPlan?.program} ·{" "}
-        {dateLabel(student.start, locale, s.today, s.noDate, true)}
-      </p>
-      <div
-        className="grid grid-cols-6 gap-1"
-        role="img"
-        aria-label={s.journeyLabel.replace(
-          "{step}",
-          String(student.journeyStep),
-        )}
-      >
-        {Array.from({ length: 6 }, (_, index) => (
-          <span
-            key={index}
-            className={cn(
-              "h-1.5 rounded-full",
-              index < student.journeyStep - 1
-                ? "bg-emerald-700"
-                : index === student.journeyStep - 1
-                  ? "bg-primary"
-                  : "bg-border",
-            )}
-          />
-        ))}
-      </div>
-      <p className="text-xs font-bold uppercase text-primary-hover">
+      <h3 className="text-[11px] font-bold uppercase text-primary-hover">
         {s.detail.now} · {s.filters[student.turn]}
-      </p>
-      <p className="text-sm font-semibold leading-5 wrap-anywhere">
+      </h3>
+      <p className="text-[15px] font-semibold leading-5 wrap-anywhere">
         {student.now === "custom"
           ? student.customAction
-          : s.now[student.now].title}
+          : student.now === "nrc"
+            ? s.detail.reviewHeading
+            : s.now[student.now].title}
         {student.nextCheck
           ? " · " + t.dueDate + " " + formatDate(student.nextCheck)
           : ""}
@@ -283,25 +298,28 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
     <main
       id="main-content"
       className={cn(
-        "flex h-dvh min-w-0 flex-col overflow-hidden [&>header]:shrink-0",
+        "flex h-dvh min-w-0 flex-col overflow-hidden [&>header]:shrink-0 [&>header]:pb-4",
         showThread && current && "max-md:[&>header]:hidden",
       )}
     >
       <WorkspacePageHeader
-        title={dictionary.sidebar.inbox}
-        description={t.description.replace("{count}", String(totalWaiting))}
+        title={
+          <span className="text-[clamp(1.375rem,3vw,1.875rem)] tracking-normal">
+            {dictionary.sidebar.inbox}
+          </span>
+        }
       />
-      <div className="grid min-h-0 flex-1 grid-rows-1 gap-4 px-4 pb-4 md:grid-cols-5 md:px-6 xl:grid-cols-12 xl:px-8">
+      <div className="grid min-h-0 flex-1 grid-rows-1 gap-4 px-4 pb-4 md:grid-cols-[minmax(14rem,2fr)_minmax(0,3fr)] md:px-6 xl:grid-cols-[minmax(0,1.07fr)_minmax(0,1.84fr)_minmax(0,1fr)] xl:px-8 xl:pb-16">
         <Card
           className={cn(
-            "min-h-0 min-w-0 overflow-hidden p-2 md:col-span-2 md:flex xl:col-span-3",
+            "min-h-0 min-w-0 overflow-hidden border-0 p-3 pt-3.5 md:flex",
             showThread && current && "hidden",
           )}
         >
           <div
             role="group"
             aria-label={t.filterLabel}
-            className="flex shrink-0 flex-wrap gap-1.5 px-2 py-2"
+            className="mb-1 grid shrink-0 grid-cols-3 rounded-full bg-muted p-1"
           >
             {filters.map((item) => (
               <Button
@@ -311,9 +329,10 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                 variant="ghost"
                 aria-pressed={filter === item}
                 className={cn(
-                  "h-auto min-h-8 whitespace-normal rounded-full bg-muted px-3 py-1 text-sm",
-                  filter === item &&
-                    "bg-foreground text-background hover:bg-foreground/90",
+                  "h-auto min-h-8 rounded-full px-1 py-1 text-sm whitespace-normal",
+                  filter === item
+                    ? "bg-card text-foreground hover:bg-card"
+                    : "font-medium hover:bg-card/60",
                 )}
                 onClick={() => {
                   setFilter(item);
@@ -332,49 +351,46 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
             aria-label={t.threadList}
             tabIndex={visible.length ? 0 : undefined}
           >
-            {visible.map(
-              ({ student: person, fixture: item, latest, waiting }) => (
-                <li key={person.id}>
-                  <button
-                    type="button"
-                    aria-pressed={id === person.id}
-                    className={cn(
-                      "flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-xl px-3 py-3 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-                      id === person.id &&
-                        "bg-primary-tint hover:bg-primary-tint",
-                    )}
-                    onClick={() => select(person)}
-                  >
-                    <Avatar initials={person.initials} />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-baseline justify-between gap-x-2">
-                        <span className="text-sm font-bold wrap-anywhere">
-                          {person.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {latest
-                            ? formatTimestamp(latest.at)
-                            : item
-                              ? timeLabel(item.time)
-                              : ""}
-                        </span>
+            {visible.map(({ student: person, fixture: item, latest }) => (
+              <li key={person.id}>
+                <button
+                  type="button"
+                  aria-pressed={id === person.id}
+                  className={cn(
+                    "flex w-full min-w-0 cursor-pointer items-start gap-2.5 rounded-2xl p-2.5 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                    id === person.id && "bg-primary-tint hover:bg-primary-tint",
+                  )}
+                  onClick={() => select(person)}
+                >
+                  <Avatar initials={person.initials} tone={item?.key} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-baseline justify-between gap-x-2">
+                      <span className="text-[15px] font-semibold wrap-anywhere">
+                        {person.name}
                       </span>
                       <span
                         className={cn(
-                          "mt-1 block line-clamp-2 text-sm leading-5 wrap-anywhere",
-                          waiting
-                            ? "font-semibold text-foreground/85"
-                            : "text-muted-foreground",
+                          "text-xs font-semibold tabular-nums text-muted-foreground",
+                          !latest &&
+                            item?.time === "hours" &&
+                            "text-destructive",
                         )}
                       >
-                        {latest?.text ??
-                          (item ? t.incoming[item.key] : s.detail.noMessages)}
+                        {latest
+                          ? formatTimestamp(latest.at)
+                          : item
+                            ? timeLabel(item.time)
+                            : ""}
                       </span>
                     </span>
-                  </button>
-                </li>
-              ),
-            )}
+                    <span className="mt-0.5 block line-clamp-2 text-[13px] leading-[18px] text-muted-foreground wrap-anywhere">
+                      {latest?.text ??
+                        (item ? t.incoming[item.key] : s.detail.noMessages)}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
           </ul>
           {visible.length === 0 && (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -385,13 +401,13 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
 
         <Card
           className={cn(
-            "min-h-0 min-w-0 overflow-hidden md:col-span-3 md:flex xl:col-span-6",
+            "min-h-0 min-w-0 overflow-hidden border-0 md:flex",
             !showThread && "hidden",
           )}
         >
           {student && id ? (
             <>
-              <div className="flex shrink-0 flex-wrap items-center gap-2 p-3 sm:gap-3 sm:p-4">
+              <div className="flex shrink-0 flex-wrap items-center gap-2 p-3 sm:gap-3 sm:px-5 sm:py-3.5">
                 <Button
                   type="button"
                   size="icon"
@@ -402,23 +418,28 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                 >
                   <ArrowLeft aria-hidden="true" />
                 </Button>
-                <Avatar initials={student.initials} />
+                <Avatar
+                  initials={student.initials}
+                  tone={fixture?.key}
+                  className="size-9 text-base"
+                />
                 <div className="min-w-0 flex-1 basis-32">
-                  <h2 className="text-base font-semibold wrap-anywhere">
+                  <h2 className="text-base leading-5 font-bold wrap-anywhere">
                     {student.name}
                   </h2>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  <p className="mt-1 text-xs leading-[17px] text-muted-foreground wrap-anywhere">
                     {s.stages[journeyStages[student.journeyStep - 1]]} ·{" "}
-                    {s.now[student.now].detail || s.contacts[student.contact]}
+                    {s.now[student.now].detail &&
+                      s.now[student.now].detail + " · "}
+                    {s.contacts[student.contact]}
                   </p>
                 </div>
                 <Link
                   href={studentUrl}
-                  className={buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                    className: "hidden text-sm sm:inline-flex",
-                  })}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "hidden h-10 rounded-full border-primary px-5 text-[15px] text-foreground sm:inline-flex",
+                  )}
                 >
                   {t.openStudent}
                 </Link>
@@ -428,7 +449,7 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="text-sm xl:hidden"
+                      className="rounded-full border-primary text-sm text-foreground xl:hidden"
                     >
                       {t.details}
                     </Button>
@@ -441,7 +462,12 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                       {student.name}
                     </DialogTitle>
                     <div className="mt-3 flex flex-col gap-3">
-                      {details}
+                      {summary && (
+                        <p className="text-sm text-muted-foreground">
+                          {summary}
+                        </p>
+                      )}
+                      {nextAction}
                       {review && (
                         <Link
                           href={studentUrl}
@@ -459,15 +485,22 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                 role="log"
                 aria-label={t.transcript}
                 tabIndex={0}
-                className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain border-y bg-muted/45 p-4 focus-visible:-outline-offset-2 focus-visible:outline-ring lg:p-5"
+                className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto overscroll-contain border-y px-4 py-5 before:mt-auto focus-visible:-outline-offset-2 focus-visible:outline-ring sm:px-6"
               >
+                {fixture && (
+                  <p className="self-center rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                    {fixture.time === "09:12" || fixture.time === "hours"
+                      ? t.times.oct1
+                      : timeLabel(fixture.time)}
+                  </p>
+                )}
                 {fixture?.key === "may" && (
                   <>
                     <Bubble outgoing meta={t.initialReplyMeta}>
                       {t.initialReply}
                     </Bubble>
                     <ActionCard
-                      label={t.actions.file}
+                      label={s.action + " · " + t.initialFileAction}
                       title={t.initialFile}
                       detail={t.initialFileDetail}
                     />
@@ -480,8 +513,8 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                 )}
                 {fixture?.key === "may" && (
                   <Badge
-                    variant="secondary"
-                    className="mx-auto whitespace-normal text-center text-xs"
+                    variant="success"
+                    className="mx-auto rounded-full px-3.5 py-1.5 text-center text-xs whitespace-normal"
                   >
                     {t.received}
                   </Badge>
@@ -518,7 +551,9 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                       : item.kind === "guide"
                         ? t.guides[item.guide].title
                         : item.booking
-                          ? t.callBooking.booked
+                          ? item.booking.status
+                            ? s.intake.statuses[item.booking.status]
+                            : t.callBooking.booked
                           : t.consultation;
                   const detail =
                     item.kind === "file"
@@ -537,7 +572,9 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                                 " MMT",
                               [
                                 t.callBooking.locations[item.booking.mode],
-                                t.callBooking.duration,
+                                item.booking.duration
+                                  ? s.consultation.duration
+                                  : t.callBooking.duration,
                                 t.callBooking.withHost.replace(
                                   "{host}",
                                   item.booking.host,
@@ -550,24 +587,30 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                     <ActionCard
                       key={message.id}
                       label={
-                        item.kind === "file" && item.paper && !item.request
-                          ? s.review.sentBack
-                          : t.actions[item.kind]
+                        s.action +
+                        " · " +
+                        (item.kind === "file" && item.paper && !item.request
+                          ? t.initialFileAction
+                          : t.actions[item.kind])
                       }
                       title={title}
                       detail={detail}
+                      meta={s.meetta + " · " + formatTimestamp(message.at)}
                     >
                       {item.kind === "file" && item.request && (
                         <>
-                          <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                            <Check className="size-4" aria-hidden="true" />
+                          <p className="flex items-center gap-1 text-[13px] font-semibold text-emerald-700 dark:text-emerald-400">
+                            <Check
+                              className="size-3 shrink-0"
+                              aria-hidden="true"
+                            />
                             {item.request.updated
                               ? t.fileRequest.updated
                               : t.fileRequest.sent}
                           </p>
                           <Link
                             href={studentUrl + "#student-documents"}
-                            className="mt-3 inline-block rounded-sm font-semibold text-primary-hover hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                            className="inline-block rounded-sm text-[13px] font-semibold text-primary-hover hover:underline focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             {t.fileRequest.documents} ›
                           </Link>
@@ -577,7 +620,7 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                   );
                 })}
               </div>
-              <div className="shrink-0 space-y-2 p-3 sm:p-4">
+              <div className="shrink-0 space-y-2.5 px-3 py-3 sm:px-5 sm:pb-4">
                 <div className="flex flex-wrap gap-2">
                   {actions.map((kind) => (
                     <Button
@@ -586,7 +629,11 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                       size="sm"
                       variant="ghost"
                       disabled={!hydrated}
-                      className="h-auto min-h-8 whitespace-normal bg-primary-tint py-1 text-xs text-primary-hover hover:bg-primary-tint/70"
+                      className={cn(
+                        actionPill,
+                        action === kind &&
+                          "border-primary bg-primary-tint hover:bg-primary-tint",
+                      )}
                       onClick={(event) => {
                         if (kind !== "guide")
                           drawerTrigger.current = event.currentTarget;
@@ -602,7 +649,7 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                         type="button"
                         size="sm"
                         variant="ghost"
-                        className="h-auto min-h-8 whitespace-normal bg-primary-tint py-1 text-xs text-primary-hover hover:bg-primary-tint/70"
+                        className={cn(actionPill, "gap-1 [&_svg]:size-3")}
                       >
                         {t.templates} <ChevronDown aria-hidden="true" />
                       </Button>
@@ -619,16 +666,14 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <form
-                  onSubmit={submit}
-                  className="flex flex-wrap items-end justify-end gap-2 rounded-xl border p-2 focus-within:ring-2 focus-within:ring-primary/20"
-                >
+                <form onSubmit={submit} className="flex items-center gap-2.5">
                   <Textarea
                     aria-label={t.compose}
                     value={draft}
                     maxLength={2000}
                     placeholder={t.compose}
-                    className="h-14 min-h-0 min-w-0 flex-1 resize-none border-0 bg-transparent px-2 py-2 focus:ring-0 sm:h-20 sm:text-sm"
+                    rows={1}
+                    className="h-12 min-h-0 min-w-0 flex-1 resize-none rounded-full border-0 bg-muted px-4 py-3 text-[15px]"
                     onChange={(event) => {
                       setDrafts((previous) => ({
                         ...previous,
@@ -640,10 +685,10 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                   <Button
                     type="submit"
                     size="sm"
-                    className="text-sm"
+                    className="h-11 rounded-full px-5 text-lg"
                     disabled={!hydrated || !draft.trim()}
                   >
-                    {s.forms.send}
+                    {t.send}
                   </Button>
                 </form>
                 {error && (
@@ -676,6 +721,15 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                       {
                         position: "bottom-center",
                         duration: 10_000,
+                        closeButton: false,
+                        icon: null,
+                        richColors: false,
+                        classNames: {
+                          toast:
+                            "w-fit! max-w-full! rounded-3xl! border-0! bg-neutral-950! px-5! text-white!",
+                          actionButton:
+                            "bg-transparent! text-sky-300! font-semibold!",
+                        },
                         action: { label: t.fileRequest.undo, onClick: undo },
                       },
                     );
@@ -687,29 +741,26 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
                 />
               )}
               {action === "call" && (
-                <InboxCallSheet
+                <BookConsultationSheet
                   key={id}
-                  studentId={id}
-                  studentName={student.name}
-                  host={
-                    student.owner === "H"
-                      ? "Hsu Wai"
-                      : student.owner === "N"
-                        ? "Nway Nway"
-                        : user.username
-                  }
+                  student={student}
                   onClose={() => setAction(null)}
-                  onRestoreFocus={() => drawerTrigger.current?.focus()}
-                  onSend={(booking) => {
-                    send(id, t.callBooking.booked, user.username, booking);
-                    setSelectedId(id);
-                    setError("");
-                    toast.success(
-                      t.callBooking.confirmation.replace(
-                        "{student}",
-                        student.name,
-                      ),
-                    );
+                  restoreFocus={() => drawerTrigger.current?.focus()}
+                  inboxBooking={{
+                    host: student.owner
+                      ? intakeOwners[student.owner]
+                      : user.username,
+                    onSend: (booking) => {
+                      send(id, t.callBooking.booked, user.username, booking);
+                      setSelectedId(id);
+                      setError("");
+                      toast.success(
+                        t.callBooking.confirmation.replace(
+                          "{student}",
+                          student.name,
+                        ),
+                      );
+                    },
                   }}
                 />
               )}
@@ -734,12 +785,19 @@ export function InboxView({ initialStudent }: { initialStudent?: string }) {
         </Card>
 
         {student && (
-          <aside className="hidden min-w-0 self-start xl:col-span-3 xl:block">
-            <Card className="gap-3 p-5">
-              <h2 className="text-lg font-semibold wrap-anywhere">
+          <aside className="hidden min-w-0 self-start space-y-4 xl:block">
+            <Card className="gap-2 border-0 px-4.5 py-4 shadow-sm">
+              <h2 className="text-base font-bold wrap-anywhere">
                 {student.name}
               </h2>
-              {details}
+              {summary && (
+                <p className="text-[13px] leading-[18px] text-muted-foreground wrap-anywhere">
+                  {summary}
+                </p>
+              )}
+            </Card>
+            <Card className="gap-2 border-0 bg-primary-tint px-4.5 py-4">
+              {nextAction}
             </Card>
           </aside>
         )}

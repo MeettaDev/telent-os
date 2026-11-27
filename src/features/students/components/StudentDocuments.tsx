@@ -1,4 +1,5 @@
 "use client";
+import { Fragment } from "react";
 import Link from "next/link";
 import { Pagination, usePagination } from "@/common/components/Pagination";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -11,17 +12,40 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  ActorBadge,
-  DocumentBadge,
-} from "@/features/students/components/StudentStatus";
+import { ActorBadge, DocumentBadge } from "./StudentStatus";
+import { GoalProgress } from "./StudentGoals";
 import { documentRows } from "@/features/students/mocks/students-data";
 import { dateLabel } from "@/features/students/lib/student-workflow";
 import { useStudentsStore } from "@/features/students/stores/students-store";
-import type { DocumentId, Student } from "@/features/students/types/student";
+import type {
+  DocumentId,
+  DocumentStatus,
+  Student,
+} from "@/features/students/types/student";
 import { useLocale } from "@/providers/locale-provider";
 import { cn } from "@/lib/utils";
+
+const actionClass =
+  "h-10 rounded-full border-primary px-4 text-sm text-foreground whitespace-nowrap";
+const cell = "px-1 py-3 align-middle";
+const groups: { id: string; statuses: DocumentStatus[]; tone: string }[] = [
+  {
+    id: "checking",
+    statuses: ["checking", "fix"],
+    tone: "text-muted-foreground",
+  },
+  { id: "toSend", statuses: ["toSend"], tone: "text-primary" },
+  {
+    id: "longTerm",
+    statuses: ["longTerm"],
+    tone: "text-violet-600 dark:text-violet-300",
+  },
+  {
+    id: "approved",
+    statuses: ["approved"],
+    tone: "text-emerald-700 dark:text-emerald-300",
+  },
+];
 
 export function StudentDocuments({
   student,
@@ -34,143 +58,206 @@ export function StudentDocuments({
   const t = dictionary.studentWorkspace;
   const statuses = useStudentsStore((state) => state.documents);
   const messages = useStudentsStore((state) => state.messages[student.id]);
-  const customRows = (messages ?? []).flatMap(({ id, action }) =>
-    action?.kind === "file" && action.document === null && action.fileName
-      ? [{ id: null, key: id, name: action.fileName, due: action.date }]
-      : [],
-  );
+  const rows = [
+    ...documentRows.map((row) => ({
+      ...row,
+      key: row.id,
+      name: t.documents[row.id].title,
+      status:
+        statuses[student.id + ":" + row.id] ?? ("toSend" as DocumentStatus),
+    })),
+    ...(messages ?? []).flatMap(({ id, action }) =>
+      action?.kind === "file" && action.document === null && action.fileName
+        ? [
+            {
+              id: null,
+              key: id,
+              name: action.fileName,
+              due: action.date,
+              status: "toSend" as DocumentStatus,
+            },
+          ]
+        : [],
+    ),
+  ];
   const { pageRows, pagination } = usePagination(
-    [...documentRows, ...customRows],
+    groups.flatMap((group) =>
+      rows.filter((row) => group.statuses.includes(row.status)),
+    ),
     student.id,
   );
-  const approved = documentRows.filter(
-    ({ id }) => statuses[student.id + ":" + id] === "approved",
-  ).length;
+
   return (
-    <Card id="student-documents" className="scroll-mt-40">
-      <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 px-9 pb-4 pt-8 lg:px-11">
-        <CardTitle>
-          {t.detail.documents} ·{" "}
-          {t.detail.approvedCount
-            .replace("{approved}", String(approved))
-            .replace(
-              "{total}",
-              String(documentRows.length + customRows.length),
-            )}
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">{t.detail.fromPlan}</p>
+    <Card id="student-documents" className="scroll-mt-36 border-0">
+      <CardHeader className="px-5 pt-5 pb-1">
+        <CardTitle>{t.detail.documents}</CardTitle>
       </CardHeader>
-      <CardContent className="px-4 pb-4 lg:px-6 lg:pb-6">
+      <CardContent className="px-5 pb-4">
         <Table
           aria-label={t.detail.documents}
-          className="min-w-2xl table-fixed text-sm leading-5"
+          className="min-w-140 table-fixed text-sm leading-5"
         >
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-3/10 py-3 text-xs">
+          <TableHeader className="border-0 bg-transparent">
+            <TableRow className="border-0">
+              <TableHead className="w-[35%] px-1 py-2 text-[11px]">
                 {t.detail.document}
               </TableHead>
-              <TableHead className="w-1/5 py-3 text-xs">
+              <TableHead className="w-[18%] px-1 py-2 text-[11px]">
                 {t.detail.appShows}
               </TableHead>
-              <TableHead className="w-1/6 whitespace-nowrap py-3 text-xs">
+              <TableHead className="w-[15%] px-1 py-2 text-[11px]">
                 {t.columns.turn}
               </TableHead>
-              <TableHead className="w-1/8 py-3 text-xs">
+              <TableHead className="w-[12%] px-1 py-2 text-[11px]">
                 {t.detail.due}
               </TableHead>
-              <TableHead className="py-3 text-xs">
+              <TableHead className="w-[20%] px-1 py-2">
                 <span className="sr-only">{t.action}</span>
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {pageRows.map((row) => {
-              const { id, due } = row;
-              if (id === null) {
-                return (
-                  <TableRow key={row.key}>
-                    <TableCell className="py-2.5 font-semibold wrap-anywhere">
-                      {row.name}
-                    </TableCell>
-                    <TableCell className="py-2.5">
-                      <DocumentBadge status="toSend" />
-                    </TableCell>
-                    <TableCell className="py-2.5">
-                      <ActorBadge actor="student" />
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap py-2.5 text-sm font-semibold">
-                      {dateLabel(due, locale, t.today, t.noDate)}
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                );
-              }
-              const status = statuses[student.id + ":" + id] ?? "toSend";
-              const request = messages?.findLast(
-                ({ action }) =>
-                  action?.kind === "file" && action.document === id,
-              )?.action;
-              return (
-                <TableRow key={id}>
-                  <TableCell className="py-2.5">
-                    <p className="font-semibold">{t.documents[id].title}</p>
-                    <p className="mt-1 text-xs leading-4.5 text-muted-foreground">
-                      {status === "toSend"
-                        ? t.statuses.toSend
-                        : t.documents[id].detail}
-                    </p>
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    <DocumentBadge status={status} />
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    {status === "approved" ? (
-                      <Badge variant="secondary">—</Badge>
-                    ) : (
-                      <ActorBadge
-                        actor={status === "checking" ? "meetta" : "student"}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap py-2.5 text-sm font-semibold">
-                    {request?.kind === "file"
-                      ? dateLabel(request.date, locale, t.today, t.noDate)
-                      : id === "topik"
-                        ? t.detail.december
-                        : dateLabel(due, locale, t.today, t.noDate)}
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    {status === "toSend" || status === "fix" ? (
-                      <Button
-                        variant="app-text"
-                        type="button"
-                        className="h-auto whitespace-nowrap p-0 text-sm text-primary-hover"
-                        onClick={() => onRequest(id)}
-                      >
-                        {t.detail.remind} ›
-                      </Button>
-                    ) : status === "longTerm" ? (
-                      <span className="text-muted-foreground">—</span>
-                    ) : (
-                      <Link
-                        href={"/students/" + student.id + "/review/" + id}
-                        className={cn(
-                          buttonVariants({ variant: "app-text" }),
-                          "h-auto whitespace-nowrap p-0 text-sm text-primary-hover",
-                        )}
-                      >
-                        {status === "approved"
-                          ? t.detail.view
-                          : t.detail.openReview}{" "}
-                        ›
-                      </Link>
-                    )}
+          {groups.map((group) => {
+            const grouped = pageRows.filter((row) =>
+              group.statuses.includes(row.status),
+            );
+            if (!grouped.length) return null;
+            return (
+              <TableBody key={group.id}>
+                <TableRow className="border-0">
+                  <TableCell
+                    colSpan={5}
+                    className={cn("px-1 pt-4 pb-1 font-bold", group.tone)}
+                  >
+                    {group.id === "toSend"
+                      ? t.documentGroups.toSend
+                      : t.statuses[
+                          group.id as "checking" | "longTerm" | "approved"
+                        ]}
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
+                {grouped.map((row) => {
+                  const { id, status } = row;
+                  const request =
+                    id &&
+                    messages?.findLast(
+                      ({ action }) =>
+                        action?.kind === "file" && action.document === id,
+                    )?.action;
+                  const due =
+                    request && request.kind === "file" ? request.date : row.due;
+                  const goal =
+                    status === "longTerm" && (id === "topik" || id === "bank");
+                  const detail = goal
+                    ? id === "topik"
+                      ? `${t.detail.topikNote} · ${t.detail.checkOct7}`
+                      : `${t.documentGroups.bankDetail} · ${t.detail.checkOct9}`
+                    : id
+                      ? t.documents[id].detail
+                      : "";
+                  return (
+                    <Fragment key={row.key}>
+                      <TableRow className="border-0">
+                        <TableCell className={cn(cell, "pr-3")}>
+                          <p className="text-base font-semibold">
+                            {goal
+                              ? `${row.name} · ${id === "topik" ? t.documentGroups.topikLevel : "48M MMK"}`
+                              : row.name}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {detail}
+                          </p>
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            cell,
+                            "[&_[data-slot=badge]]:rounded-full [&_[data-slot=badge]]:text-xs",
+                          )}
+                        >
+                          <DocumentBadge status={status} />
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            cell,
+                            "[&_[data-slot=badge]]:rounded-full [&_[data-slot=badge]]:text-xs",
+                          )}
+                        >
+                          {status === "approved" ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            <ActorBadge
+                              actor={
+                                status === "checking" || status === "fix"
+                                  ? "meetta"
+                                  : "student"
+                              }
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            cell,
+                            "font-semibold whitespace-nowrap",
+                          )}
+                        >
+                          {id === "topik" && !request
+                            ? t.detail.december
+                            : dateLabel(due, locale, t.today, t.noDate)}
+                        </TableCell>
+                        <TableCell className={cn(cell, "text-right")}>
+                          {status === "longTerm" || id === null ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : status === "toSend" || status === "fix" ? (
+                            <Button
+                              variant="outline"
+                              type="button"
+                              className={actionClass}
+                              onClick={() => onRequest(id)}
+                            >
+                              {t.detail.remind}
+                            </Button>
+                          ) : (
+                            <Link
+                              href={`/students/${student.id}/review/${id}`}
+                              className={cn(
+                                buttonVariants({ variant: "outline" }),
+                                actionClass,
+                                id === "legalized" &&
+                                  status === "checking" &&
+                                  "bg-primary-tint",
+                              )}
+                            >
+                              {status === "approved"
+                                ? t.detail.view
+                                : t.detail.openReview}
+                            </Link>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      {goal && (
+                        <TableRow className="border-0">
+                          <TableCell colSpan={5} className="px-1 pt-0 pb-5">
+                            <GoalProgress
+                              steps={
+                                id === "topik"
+                                  ? [
+                                      "study",
+                                      "register",
+                                      "test",
+                                      "score",
+                                      "upload",
+                                    ]
+                                  : ["plan", "save", "hold", "certificate"]
+                              }
+                            />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </TableBody>
+            );
+          })}
         </Table>
         <Pagination {...pagination} tableLabel={t.detail.documents} />
       </CardContent>

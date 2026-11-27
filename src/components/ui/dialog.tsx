@@ -12,7 +12,7 @@ function DialogContent({
   className,
   closeLabel,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Content> & { closeLabel: string }) {
+}: ComponentProps<typeof DialogPrimitive.Content> & { closeLabel?: string }) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-slate-950/45 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
@@ -24,12 +24,14 @@ function DialogContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close
-          aria-label={closeLabel}
-          className="absolute right-4 top-4 rounded-lg p-1 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <X aria-hidden="true" className="size-4" />
-        </DialogPrimitive.Close>
+        {closeLabel && (
+          <DialogPrimitive.Close
+            aria-label={closeLabel}
+            className="absolute right-4 top-4 rounded-lg p-1 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X aria-hidden="true" className="size-4" />
+          </DialogPrimitive.Close>
+        )}
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );

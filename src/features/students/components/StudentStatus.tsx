@@ -36,7 +36,7 @@ export function DocumentBadge({ status }: { status: DocumentStatus }) {
               ? "purple"
               : status === "fix"
                 ? "destructive"
-                : "tint"
+                : "secondary"
       }
     >
       {dictionary.studentWorkspace.statuses[status]}

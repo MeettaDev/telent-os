@@ -16,6 +16,7 @@ export function WorkspacePageHeader({
   breadcrumbLabel,
   children,
   toolbar,
+  inlineActions = false,
 }: {
   title: ReactNode;
   avatar?: ReactNode;
@@ -25,6 +26,7 @@ export function WorkspacePageHeader({
   breadcrumbLabel?: string;
   children?: ReactNode;
   toolbar?: ReactNode;
+  inlineActions?: boolean;
 }) {
   const { dictionary } = useLocale();
   const toggle = useAppShellStore((state) => state.toggleMobileSidebar);
@@ -35,6 +37,7 @@ export function WorkspacePageHeader({
         breadcrumbs
           ? "space-y-4 pb-4 sm:pt-8"
           : "space-y-5 pb-5 md:pt-6 xl:pt-8",
+        inlineActions && "max-lg:static",
       )}
     >
       {breadcrumbs && (
@@ -62,8 +65,18 @@ export function WorkspacePageHeader({
           ))}
         </nav>
       )}
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex min-w-0 items-start gap-3 xl:flex-1">
+      <div
+        className={cn(
+          "flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between",
+          inlineActions && "lg:flex-row lg:items-center lg:justify-between",
+        )}
+      >
+        <div
+          className={cn(
+            "flex min-w-0 items-start gap-3 xl:flex-1",
+            inlineActions && "items-center lg:flex-1",
+          )}
+        >
           <Button
             variant="outline"
             size="icon"
@@ -80,6 +93,7 @@ export function WorkspacePageHeader({
               className={cn(
                 "workspace-title-size font-bold leading-tight tracking-tight text-foreground wrap-anywhere",
                 breadcrumbs && "leading-8",
+                inlineActions && "lg:text-[28px]",
               )}
             >
               {title}
@@ -93,7 +107,12 @@ export function WorkspacePageHeader({
           </div>
         </div>
         {actions && (
-          <div className="flex flex-wrap items-center gap-2 xl:shrink-0">
+          <div
+            className={cn(
+              "flex flex-wrap items-center gap-2 xl:shrink-0",
+              inlineActions && "gap-3 lg:shrink-0",
+            )}
+          >
             {actions}
           </div>
         )}

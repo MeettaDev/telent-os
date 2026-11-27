@@ -3,15 +3,19 @@
 import { useState, type FormEvent } from "react";
 import { dictionaries, type Locale } from "@/common/i18n/dictionaries";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { dateLabel } from "@/features/students/lib/student-workflow";
 import { reviewReasons } from "@/features/students/mocks/students-data";
 import type {
   DocumentId,
   PaperReview,
 } from "@/features/students/types/student";
 import { cn } from "@/lib/utils";
+import styles from "@/common/components/workspace.module.css";
 import { useLocale } from "@/providers/locale-provider";
 
 const reasons = [...reviewReasons, "other"] as const;
@@ -19,10 +23,7 @@ type Reason = (typeof reasons)[number];
 
 export function ReviewFixDialog({
   student,
-  document,
   paper,
-  otherApproved,
-  nextCheck,
   onCancel,
   onSend,
 }: {
@@ -70,43 +71,27 @@ export function ReviewFixDialog({
       setError(onSend(selected, message.trim()) ?? "");
   }
 
-  const effects = [
-    [
-      copy.app,
-      copy.appDetail
-        .replace("{group}", () => t.documents[document].title)
-        .replace("{paper}", () => paperName),
-    ],
-    [copy.chat, copy.chatDetail],
-    [
-      copy.otherPapers,
-      copy.otherPapersDetail.replace("{count}", String(otherApproved)),
-    ],
-    [
-      copy.clock,
-      copy.clockDetail.replace("{version}", String(paper.version + 1)),
-    ],
-    [copy.nextCheck, dateLabel(nextCheck, locale, t.today, t.noDate)],
-  ];
   const chipClass =
-    "h-auto min-h-9 whitespace-normal rounded-full px-3 py-1.5 text-sm";
+    "h-auto min-h-9 whitespace-normal rounded-full border border-transparent bg-muted px-3.5 py-2 text-sm text-muted-foreground";
   const selectedClass =
-    "border-primary bg-primary-tint font-bold text-primary-hover";
+    "border-primary bg-primary-tint font-semibold text-foreground";
 
   return (
     <DialogContent
-      closeLabel={t.close}
-      aria-describedby={undefined}
-      className="max-h-9/10 max-w-xl p-5 sm:p-7"
+      className={cn(
+        styles.palette,
+        "inset-3 max-h-[calc(100dvh-1.5rem)] max-w-150 rounded-3xl border-0 p-5 sm:p-6",
+      )}
     >
       <DialogTitle className="pr-8 text-xl font-bold wrap-anywhere">
         {copy.title
           .replace("{paper}", () => paperName)
           .replace("{student}", () => student)}
       </DialogTitle>
+      <DialogDescription className="sr-only">{copy.reason}</DialogDescription>
       <form onSubmit={submit} className="mt-5 space-y-4">
         <fieldset className="min-w-0">
-          <legend className="mb-3 text-xs font-bold uppercase text-primary-hover">
+          <legend className="mb-3 text-xs font-bold uppercase text-muted-foreground">
             {copy.reason}
           </legend>
           <div className="flex flex-wrap gap-2">
@@ -124,14 +109,12 @@ export function ReviewFixDialog({
                   }}
                 />
                 <span
-                  className={buttonVariants({
-                    variant: "outline",
-                    className: cn(
-                      chipClass,
-                      "peer-focus-visible:ring-2 peer-focus-visible:ring-ring",
-                      selected === reason && selectedClass,
-                    ),
-                  })}
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    chipClass,
+                    "peer-focus-visible:ring-2 peer-focus-visible:ring-ring",
+                    selected === reason && selectedClass,
+                  )}
                 >
                   {reason === "other" ? copy.other : t.review.reasons[reason]}
                 </span>
@@ -139,21 +122,30 @@ export function ReviewFixDialog({
             ))}
           </div>
         </fieldset>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="space-y-3">
           <label
             htmlFor="fix-message"
-            className="text-xs font-bold uppercase text-primary-hover"
+            className="text-xs font-bold uppercase text-muted-foreground"
           >
             {copy.message}
           </label>
-          <div role="group" aria-label={copy.language} className="flex gap-2">
+          <div
+            role="group"
+            aria-label={copy.language}
+            className="grid w-50 grid-cols-2 rounded-full bg-muted p-1"
+          >
             {(["en", "my"] as const).map((value) => (
               <Button
                 key={value}
                 type="button"
                 variant="outline"
                 aria-pressed={language === value}
-                className={cn(chipClass, language === value && selectedClass)}
+                className={cn(
+                  "h-9 rounded-full border-0 text-sm",
+                  language === value
+                    ? "bg-card font-semibold text-foreground shadow-sm"
+                    : "bg-transparent text-muted-foreground",
+                )}
                 onClick={() => setLanguage(value)}
               >
                 {value === "en" ? "EN" : "မြန်မာ"}
@@ -167,43 +159,24 @@ export function ReviewFixDialog({
           required
           maxLength={2000}
           value={message}
-          className="min-h-20 resize-y text-sm leading-5"
+          className="min-h-20 rounded-2xl border-primary text-base leading-6"
           placeholder={review.reasonPlaceholder}
           onChange={(event) => {
             setError("");
             setEdits({ ...edits, [language]: event.target.value });
           }}
         />
-        <section aria-labelledby="fix-effects">
-          <h3
-            id="fix-effects"
-            className="text-xs font-bold uppercase text-primary-hover"
-          >
-            {copy.effects}
-          </h3>
-          <dl className="mt-3 grid gap-2 rounded-xl bg-muted/60 p-4 text-sm leading-5">
-            {effects.map(([label, detail]) => (
-              <div key={label} className="grid gap-1 sm:grid-cols-5 sm:gap-3">
-                <dt className="font-semibold text-muted-foreground">{label}</dt>
-                <dd className="wrap-anywhere sm:col-span-4">{detail}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
         {error && (
           <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
         )}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="flex-1 text-xs text-muted-foreground">
-            {copy.audit.replace("{version}", String(paper.version))}
-          </p>
-          <div className="ml-auto flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             <Button
               type="button"
               variant="outline"
-              className="text-sm"
+              className="rounded-full border-primary px-5 text-base text-foreground"
               onClick={onCancel}
             >
               {t.cancel}
@@ -211,7 +184,7 @@ export function ReviewFixDialog({
             <Button
               type="submit"
               disabled={!selected || !message.trim()}
-              className="bg-orange-700 text-sm text-white hover:bg-orange-800"
+              className="rounded-full bg-orange-700 px-6 text-lg text-white hover:bg-orange-800"
             >
               {copy.send}
             </Button>
