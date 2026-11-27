@@ -1,73 +1,50 @@
-import { Download, ListFilter } from "lucide-react";
-
-import { ParamSearchInput } from "@/common/components/ParamSearchInput";
-import type { Dictionary } from "@/common/i18n/dictionaries";
+"use client";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/providers/locale-provider";
+import { students as fixtures } from "@/features/students/mocks/students-data";
+import type { StudentFilter } from "@/features/students/lib/student-workflow";
+import type { Student } from "@/features/students/types/student";
+import { cn } from "@/lib/utils";
 
-export type StudentFilter = "all" | "needsAttention" | "atRisk" | "unclaimed";
-
-const filters: { key: StudentFilter; count: number }[] = [
-  { key: "all", count: 42 },
-  { key: "needsAttention", count: 8 },
-  { key: "atRisk", count: 5 },
-  { key: "unclaimed", count: 2 },
-];
-
-type StudentsToolbarProps = {
-  dictionary: Dictionary;
-  filter: StudentFilter;
-  initialQuery: string;
-  onFilterChange: (filter: StudentFilter) => void;
-  onSearchChange: (query: string) => void;
-};
-
+const counts = { all: 24, meetta: 7, student: 12, office: 5, noOne: 1 };
 export function StudentsToolbar({
-  dictionary,
   filter,
-  initialQuery,
   onFilterChange,
-  onSearchChange,
-}: StudentsToolbarProps) {
+  students,
+}: {
+  filter: StudentFilter;
+  onFilterChange: (filter: StudentFilter) => void;
+  students: Student[];
+}) {
+  const { dictionary } = useLocale();
+  const t = dictionary.studentWorkspace;
   return (
-    <section className="surface flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-      <ParamSearchInput
-        className="flex-1 lg:max-w-sm"
-        initialValue={initialQuery}
-        loadingLabel={dictionary.students.searching}
-        onDebouncedChange={onSearchChange}
-        paramName="search"
-        placeholder={dictionary.students.search}
-      />
-      <div className="flex flex-1 gap-2 overflow-x-auto py-1">
-        {filters.map(({ key, count }) => (
-          <button
-            aria-pressed={filter === key}
-            className={`cursor-pointer whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold uppercase transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${filter === key ? "bg-primary-tint text-primary-hover" : "bg-[#eef0ed] text-[#626a63] hover:bg-muted dark:bg-muted"}`}
+    <nav aria-label={t.title} className="flex flex-wrap gap-2">
+      {(Object.keys(counts) as StudentFilter[]).map((key) => {
+        const count =
+          counts[key] +
+          (key === "all"
+            ? students.length - fixtures.length
+            : students.filter((s) => s.turn === key).length -
+              fixtures.filter((s) => s.turn === key).length);
+        return (
+          <Button
             key={key}
-            onClick={() => onFilterChange(key)}
             type="button"
+            variant="outline"
+            aria-pressed={key === filter}
+            onClick={() => onFilterChange(key)}
+            className={cn(
+              "h-9.5 gap-1 rounded-full border-0 px-4 text-sm",
+              key === filter
+                ? "border-foreground bg-foreground text-background hover:bg-foreground/90"
+                : "text-foreground/80",
+            )}
           >
-            {dictionary.students[key]}{" "}
-            <span className="tabular-nums">{count}</span>
-          </button>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <Button
-          className="flex-1 text-primary-hover lg:min-w-32"
-          variant="outline"
-        >
-          <ListFilter />
-          {dictionary.students.filters} <span className="text-primary">3</span>
-        </Button>
-        <Button
-          className="flex-1 text-primary-hover lg:min-w-32"
-          variant="outline"
-        >
-          <Download />
-          {dictionary.students.export}
-        </Button>
-      </div>
-    </section>
+            {t.filters[key]} <span className="tabular-nums">{count}</span>
+          </Button>
+        );
+      })}
+    </nav>
   );
 }

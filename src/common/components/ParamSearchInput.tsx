@@ -62,7 +62,7 @@ export function ParamSearchInput({
   return (
     <label
       className={cn(
-        "flex h-11 min-w-0 items-center gap-2 rounded-xl bg-[#f3f5f3] px-4 text-muted-foreground transition-colors focus-within:ring-2 focus-within:ring-primary/20 dark:bg-muted",
+        "flex h-10 min-w-0 items-center gap-2 rounded-xl bg-card px-4 text-muted-foreground transition-colors focus-within:ring-2 focus-within:ring-primary/20",
         className,
       )}
     >
@@ -70,7 +70,7 @@ export function ParamSearchInput({
       <span className="sr-only">{placeholder}</span>
       <input
         aria-busy={isDebouncing}
-        className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:cursor-pointer"
+        className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:cursor-pointer"
         onChange={(event) => handleChange(event.target.value)}
         placeholder={placeholder}
         type="search"

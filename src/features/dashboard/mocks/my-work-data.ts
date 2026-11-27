@@ -1,71 +1,83 @@
 import type {
-  CaseHealth,
-  Consultation,
-  QueueItem,
+  TodayMetric,
+  TodayTask,
 } from "@/features/dashboard/types/my-work";
 
-export const queueItems: QueueItem[] = [
+export const todayMetrics: TodayMetric[] = [
+  { id: "reviews", count: 3 },
+  { id: "replies", count: 4 },
+  { id: "consultations", count: 2 },
+  { id: "noAction", count: 1 },
+];
+
+export const todayTasks: TodayTask[] = [
   {
-    id: 1,
-    initials: "NM",
-    title: "Prepare consultation",
+    id: "mofa",
+    student: "Ko Thura Zaw",
+    studentId: "MM-2026-0149",
+    group: "overdue",
+    actor: "meetta",
+    owner: "N",
+    primaryAction: true,
+  },
+  {
+    id: "nrc",
+    student: "May Zin",
+    studentId: "MM-2026-0150",
+    group: "today",
+    actor: "meetta",
+    owner: null,
+    primaryAction: true,
+  },
+  {
+    id: "call",
+    student: "Thiri Win",
+    studentId: "MM-2026-0155",
+    group: "today",
+    actor: "meetta",
+    owner: "H",
+  },
+  {
+    id: "contact",
+    student: "Hnin Ei Phyu",
+    group: "today",
+    actor: "meetta",
+    owner: null,
+  },
+  {
+    id: "chat",
+    student: "Ko Aung",
+    studentId: "MM-2026-0152",
+    group: "today",
+    actor: "meetta",
+    owner: null,
+  },
+  {
+    id: "plan",
     student: "Nang Mya Su Aung",
-    category: "Consultation",
-    owner: "May Zin",
-    due: "9:30 AM",
-    status: "actionable",
+    studentId: "MM-2026-0142",
+    group: "tomorrow",
+    actor: "meetta",
+    owner: "H",
   },
   {
-    id: 2,
-    initials: "HN",
-    title: "Confirm selected-step scope",
-    student: "Htet Naing",
-    category: "Support activation",
-    owner: "May Zin",
-    due: "11:00 AM",
-    status: "dueSoon",
-  },
-  {
-    id: 3,
-    initials: "SL",
-    title: "Send published plan summary",
-    student: "Su Su Lwin",
-    category: "Plan published",
-    owner: "May Zin",
-    due: "1:30 PM",
-    status: "actionable",
-  },
-  {
-    id: 4,
-    initials: "AT",
-    title: "Follow up bank statement",
-    student: "Aye Thandar",
-    category: "Application",
-    owner: "May Zin",
-    due: "3:00 PM",
-    status: "overdue",
-  },
-  {
-    id: 5,
-    initials: "KT",
-    title: "Review consultation notes",
-    student: "Ko Tay Za",
-    category: "Consultation",
-    owner: "May Zin",
-    due: "Tomorrow",
-    status: "scheduled",
+    id: "next",
+    student: "Aung Min",
+    studentId: "MM-2026-0154",
+    group: "noAction",
+    actor: "noOne",
+    owner: null,
   },
 ];
 
-export const consultations: Consultation[] = [
-  { time: "09:30", student: "Nang Mya Su Aung" },
-  { time: "13:00", student: "Ko Tay Za" },
-  { time: "16:30", student: "Thet Naing Oo" },
-  { time: "17:30", student: "Thiri Kay" },
-];
+export const waitingItems = [
+  { id: "passport", student: "May Zin" },
+  { id: "university", student: "Ko Thura Zaw" },
+  { id: "tb", student: "Su Su Hlaing" },
+] as const;
 
-export const caseHealth: CaseHealth[] = [
-  { key: "onTrack", value: 29, width: "68%" },
-  { key: "needsAttention", value: 8, width: "20%" },
-  { key: "atRisk", value: 5, width: "12%" },
-];
+export const appActivities = [
+  { id: "topik", student: "Ko Aung", time: "10:05" },
+  { id: "bank", student: "May Zin", time: "09:40" },
+  { id: "study", student: "Thiri Win", time: null },
+] as const;

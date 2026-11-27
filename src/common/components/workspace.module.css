@@ -1,0 +1,15 @@
+:global(html:not(.dark)) .palette {
+  --background: #efeff2;
+  --foreground: #171717;
+  --card-foreground: #171717;
+  --muted: #efeff2;
+  --muted-foreground: #646464;
+  --border: #e7e7ec;
+  --input: #d8d8e1;
+  --primary: #0075cf;
+  --primary-hover: #075ca9;
+  --primary-tint: #e5f5fc;
+  --destructive: #bb3905;
+  --destructive-tint: #fdf0f0;
+  --destructive-foreground: #b42318;
+}

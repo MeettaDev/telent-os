@@ -1,215 +1,239 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import {
-  BookOpenText,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  CreditCard,
-  GraduationCap,
-  History,
-  MessageSquareText,
-  ShieldAlert,
+  CalendarDays,
+  Landmark,
+  MessageCircle,
+  Settings,
   UsersRound,
-  Video,
   X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { useMockUser } from "@/common/auth/mock-auth";
-import { Text } from "@/components/ui/typography";
-import { useAppShellStore } from "@/common/stores/app-shell-store";
 import { UserProfileMenu } from "@/common/components/UserProfileMenu";
+import { useAppShellStore } from "@/common/stores/app-shell-store";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useLocale } from "@/providers/locale-provider";
+import { cn } from "@/lib/utils";
+import { waitingCount } from "@/features/inbox/mocks/inbox-data";
+import { useStudentsStore } from "@/features/students/stores/students-store";
 
-const primaryItems = [
-  { key: "myWork", href: "/", icon: ClipboardList, count: 7 },
-  { key: "students", href: "/students", icon: UsersRound, count: undefined },
-  { key: "consultations", href: "/consultations", icon: Video, count: 3 },
-  { key: "reviews", href: "/reviews", icon: BookOpenText, count: 4 },
-  { key: "payments", href: "/payments", icon: CreditCard, count: 2 },
-  { key: "messages", href: "/messages", icon: MessageSquareText, count: 5 },
-  { key: "escalations", href: "/escalations", icon: ShieldAlert, count: 2 },
+const items = [
+  { key: "today", href: "/", icon: CalendarDays, count: 7 },
+  { key: "students", href: "/students", icon: UsersRound, count: 24 },
+  { key: "inbox", href: "/inbox", icon: MessageCircle, count: undefined },
+  {
+    key: "universities",
+    href: "/universities",
+    icon: Landmark,
+    count: undefined,
+  },
 ] as const;
 
-const operationItems = [
-  { key: "referenceRules", href: "/reference-rules", icon: BookOpenText },
-  { key: "activityLog", href: "/activity-log", icon: History },
-  { key: "admissions", href: "/admissions", icon: GraduationCap },
-] as const;
-
-export function AppSidebar() {
+function SidebarContent({
+  mobile = false,
+  inset = false,
+}: {
+  mobile?: boolean;
+  inset?: boolean;
+}) {
+  const { dictionary, locale } = useLocale();
   const pathname = usePathname();
-  const user = useMockUser();
+  const waiting = useStudentsStore((state) => waitingCount(state.messages));
+  const closeMobileSidebar = useAppShellStore(
+    (state) => state.closeMobileSidebar,
+  );
+
+  return (
+    <div className={cn("flex h-full min-h-0 flex-col p-4", inset && "p-3.5")}>
+      <div className="flex min-h-12 items-center justify-between px-2">
+        <Link
+          href="/"
+          onClick={closeMobileSidebar}
+          aria-label={dictionary.sidebar.today}
+          className="flex items-baseline gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span
+            className={cn(
+              "text-2xl font-bold tracking-tight text-primary-hover",
+              inset && "text-primary",
+            )}
+          >
+            {dictionary.appName}
+          </span>
+          <span
+            className={cn(
+              "text-base font-semibold text-muted-foreground",
+              inset && "rounded-full bg-muted px-2.5 py-1 text-xs",
+            )}
+          >
+            OS
+          </span>
+        </Link>
+        {mobile && (
+          <SheetClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={dictionary.sidebar.close}
+            >
+              <X aria-hidden="true" />
+            </Button>
+          </SheetClose>
+        )}
+      </div>
+      <nav
+        aria-label={dictionary.sidebar.workspace}
+        className={cn("mt-6 flex-1 space-y-1 overflow-y-auto", inset && "mt-2")}
+      >
+        {items.map(({ key, href, icon: Icon, count }) => {
+          const badgeCount = key === "inbox" ? waiting || undefined : count;
+          const active =
+            pathname === href ||
+            (href !== "/" && pathname.startsWith(`${href}/`)) ||
+            (key === "inbox" && pathname === "/messages");
+          return (
+            <Link
+              key={key}
+              href={href}
+              onClick={closeMobileSidebar}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                inset && "min-h-12 rounded-full px-4",
+                active
+                  ? inset
+                    ? "bg-muted font-semibold text-foreground"
+                    : "bg-primary-tint font-semibold text-primary-hover"
+                  : "text-foreground/80 hover:bg-muted",
+              )}
+            >
+              <Icon
+                aria-hidden="true"
+                className={cn(
+                  "size-5 shrink-0",
+                  !active && "text-muted-foreground",
+                )}
+                strokeWidth={1.8}
+              />
+              <span className={locale === "my" ? "text-sm" : undefined}>
+                {dictionary.sidebar[key]}
+              </span>
+              {badgeCount !== undefined && (
+                <Badge
+                  variant={key === "inbox" ? "default" : "secondary"}
+                  className={cn(
+                    "ml-auto min-w-6 rounded-full px-2 py-0 text-sm",
+                    inset &&
+                      (pathname === "/"
+                        ? "bg-transparent text-foreground"
+                        : active
+                          ? "bg-primary-tint text-primary-hover"
+                          : "bg-muted text-muted-foreground"),
+                  )}
+                >
+                  {badgeCount}
+                </Badge>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="space-y-3 pt-6">
+        <Link
+          href="/settings"
+          onClick={closeMobileSidebar}
+          aria-current={pathname === "/settings" ? "page" : undefined}
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            pathname === "/settings"
+              ? "bg-primary-tint font-semibold text-primary-hover"
+              : "text-foreground/80 hover:bg-muted",
+          )}
+        >
+          <Settings
+            aria-hidden="true"
+            className="size-5 shrink-0 text-muted-foreground"
+            strokeWidth={1.8}
+          />
+          {dictionary.sidebar.settings}
+        </Link>
+        <UserProfileMenu trigger="profile" align="start" />
+      </div>
+    </div>
+  );
+}
+
+export function AppSidebar({ inset = false }: { inset?: boolean }) {
   const { dictionary } = useLocale();
-  const {
-    isSidebarCollapsed: collapsed,
-    isMobileSidebarOpen,
-    toggleSidebar,
-    closeMobileSidebar,
-  } = useAppShellStore();
+  const { isMobileSidebarOpen, closeMobileSidebar } = useAppShellStore();
+  const opener = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (useStudentsStore.getState().hydrated) return;
+    if (useStudentsStore.persist) {
+      void useStudentsStore.persist.rehydrate();
+    } else {
+      useStudentsStore.setState({ hydrated: true });
+    }
+  }, []);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    function closeOnDesktop() {
+      if (desktop.matches) closeMobileSidebar();
+    }
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, [closeMobileSidebar]);
 
   return (
     <>
-      {isMobileSidebarOpen && (
-        <button
-          aria-label={dictionary.sidebar.close}
-          className="fixed inset-0 z-30 bg-slate-950/35 backdrop-blur-[2px] lg:hidden"
-          onClick={closeMobileSidebar}
-          type="button"
-        />
-      )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[17rem] bg-card shadow-xl shadow-slate-900/10 transition-[width,transform] duration-200 lg:sticky lg:top-0 lg:z-10 lg:h-dvh lg:shrink-0 lg:translate-x-0 lg:border-r lg:border-border lg:shadow-none motion-reduce:transition-none ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "lg:w-[5.25rem]" : "lg:w-[17rem]"}`}
+        className={cn(
+          "sticky top-0 hidden h-dvh w-60 shrink-0 border-r bg-card lg:block",
+          inset && "top-4 ml-4 h-[calc(100dvh-2rem)] w-58 rounded-3xl border-0",
+        )}
       >
-        <div className="flex min-w-0 flex-1 flex-col p-4">
-          <div
-            className={`flex h-12 items-center ${collapsed ? "lg:justify-center" : "justify-between"}`}
-          >
-            <div className={collapsed ? "lg:hidden" : "block"}>
-              <p className="text-[28px] font-bold leading-none tracking-[-0.05em] text-primary">
-                {dictionary.appName}
-              </p>
-              <Text
-                variant="caption"
-                className="mt-1 font-semibold uppercase tracking-[0.06em]"
-              >
-                {dictionary.appTagline}
-              </Text>
-            </div>
-            <button
-              aria-label={dictionary.sidebar.close}
-              className="flex size-9 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted lg:hidden"
-              onClick={closeMobileSidebar}
-              type="button"
-            >
-              <X className="size-4" />
-            </button>
-            <button
-              aria-label={
-                collapsed
-                  ? dictionary.sidebar.expand
-                  : dictionary.sidebar.collapse
-              }
-              className="hidden size-9 cursor-pointer items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:flex"
-              onClick={toggleSidebar}
-              type="button"
-            >
-              {collapsed ? (
-                <ChevronRight className="size-4" />
-              ) : (
-                <ChevronLeft className="size-4" />
-              )}
-            </button>
-          </div>
-          <div
-            className={`mt-4 rounded-xl bg-[#f3f5f3] p-4 dark:bg-muted ${collapsed ? "lg:hidden" : "block"}`}
-          >
-            <Text
-              variant="caption"
-              className="font-semibold uppercase text-primary-hover"
-            >
-              {dictionary.sidebar.workspace}
-            </Text>
-            <Text variant="body" className="mt-2 font-semibold">
-              {dictionary.sidebar.assignedStudents}
-            </Text>
-          </div>
-          <nav aria-label="Workspace" className="mt-5 space-y-1">
-            {primaryItems.map(({ key, href, icon: Icon, count }) => {
-              const isActive =
-                href === "/"
-                  ? pathname === href
-                  : pathname === href || pathname.startsWith(`${href}/`);
-
-              return (
-                <Link
-                  aria-current={isActive ? "page" : undefined}
-                  aria-label={dictionary.sidebar[key]}
-                  className={`relative flex w-full cursor-pointer items-center rounded-xl py-3 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${collapsed ? "lg:justify-center lg:px-0" : "gap-3 px-3"} ${isActive ? "bg-primary-tint font-semibold text-primary-hover before:absolute before:left-0 before:h-8 before:w-1 before:rounded-full before:bg-primary" : "text-[#525b54] hover:bg-muted dark:text-muted-foreground"}`}
-                  href={href}
-                  key={key}
-                  onClick={closeMobileSidebar}
-                  title={collapsed ? dictionary.sidebar[key] : undefined}
-                >
-                  <Icon
-                    aria-hidden="true"
-                    className={`size-[18px] shrink-0 ${collapsed ? "lg:block" : "lg:hidden"}`}
-                    strokeWidth={1.8}
-                  />
-                  <span className={collapsed ? "lg:hidden" : "block"}>
-                    {dictionary.sidebar[key]}
-                  </span>
-                  {count && (
-                    <span
-                      className={`ml-auto min-w-7 rounded-full bg-[#ecefec] px-2 py-1 text-center text-xs font-medium text-[#59625b] dark:bg-muted ${collapsed ? "lg:absolute lg:right-1 lg:top-1 lg:min-w-4 lg:px-1 lg:py-0 lg:text-[9px]" : ""}`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-          <Text
-            variant="caption"
-            className={`mb-2 mt-6 px-1 font-semibold uppercase text-[#59625b] ${collapsed ? "lg:hidden" : "block"}`}
-          >
-            {dictionary.sidebar.operations}
-          </Text>
-          <nav aria-label="Operations" className="space-y-1">
-            {operationItems.map(({ key, href, icon: Icon }) => {
-              const isActive =
-                pathname === href || pathname.startsWith(`${href}/`);
-
-              return (
-                <Link
-                  aria-current={isActive ? "page" : undefined}
-                  aria-label={dictionary.sidebar[key]}
-                  className={`relative flex w-full cursor-pointer items-center rounded-xl py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${collapsed ? "lg:justify-center lg:px-0" : "gap-3 px-3"} ${isActive ? "bg-primary-tint font-semibold text-primary-hover before:absolute before:left-0 before:h-8 before:w-1 before:rounded-full before:bg-primary" : "text-[#525b54] hover:bg-muted dark:text-muted-foreground"}`}
-                  href={href}
-                  key={key}
-                  onClick={closeMobileSidebar}
-                  title={collapsed ? dictionary.sidebar[key] : undefined}
-                >
-                  <Icon
-                    className={`size-[18px] shrink-0 ${collapsed ? "lg:block" : "lg:hidden"}`}
-                    strokeWidth={1.8}
-                  />
-                  <span className={collapsed ? "lg:hidden" : "block"}>
-                    {dictionary.sidebar[key]}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="mt-auto border-t border-border pt-4">
-            <div
-              className={`flex items-center ${collapsed ? "lg:justify-center" : "gap-3 px-1"}`}
-            >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-tint text-sm font-semibold text-primary-hover">
-                {user.initials}
-              </span>
-              <div
-                className={`min-w-0 flex-1 ${collapsed ? "lg:hidden" : "block"}`}
-              >
-                <Text variant="body" className="font-semibold">
-                  {user.username}
-                </Text>
-                <Text variant="caption">
-                  {user.role === "admin"
-                    ? dictionary.sidebar.adminRole
-                    : dictionary.sidebar.counselorRole}
-                </Text>
-              </div>
-              <div className={collapsed ? "lg:hidden" : "block"}>
-                <UserProfileMenu trigger="options" />
-              </div>
-            </div>
-          </div>
-        </div>
+        <SidebarContent inset={inset} />
       </aside>
+      <Sheet
+        open={isMobileSidebarOpen}
+        onOpenChange={(open) => {
+          if (!open) closeMobileSidebar();
+        }}
+      >
+        <SheetContent
+          onOpenAutoFocus={() => {
+            opener.current =
+              document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            opener.current?.focus();
+          }}
+        >
+          <SheetTitle className="sr-only">
+            {dictionary.sidebar.workspace}
+          </SheetTitle>
+          <SheetDescription className="sr-only">
+            {dictionary.sidebar.navigationDescription}
+          </SheetDescription>
+          <SidebarContent mobile />
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

@@ -1,48 +1,85 @@
-import { Check } from "lucide-react";
-
-import type { Dictionary } from "@/common/i18n/dictionaries";
-import { Text } from "@/components/ui/typography";
+"use client";
+import { Card, CardContent } from "@/components/ui/card";
 import { journeyStages } from "@/features/students/mocks/students-data";
-
+import { useLocale } from "@/providers/locale-provider";
+import { cn } from "@/lib/utils";
 export function JourneyProgress({
-  dictionary,
   activeStage,
+  consultationNote,
 }: {
-  dictionary: Dictionary;
-  activeStage: string;
+  activeStage: number;
+  consultationNote?: string;
 }) {
-  const activeIndex = journeyStages.findIndex(({ key }) => key === activeStage);
-
+  const { dictionary } = useLocale();
+  const t = dictionary.studentWorkspace;
   return (
-    <section className="surface mt-8 overflow-x-auto p-5">
-      <Text variant="caption" className="font-semibold uppercase">
-        {dictionary.studentDetail.journeyProgress}
-      </Text>
-      <ol className="mt-5 flex min-w-[52rem]">
-        {journeyStages.map(({ key }, index) => {
-          const complete = index < activeIndex;
-          const active = index === activeIndex;
-          return (
-            <li className="relative flex flex-1 flex-col items-start" key={key}>
-              {index < journeyStages.length - 1 && (
-                <span
-                  className={`absolute left-7 right-1 top-3 h-1 rounded-full ${index < activeIndex ? "bg-emerald-600" : "bg-[#e8ebe7]"}`}
-                />
-              )}
-              <span
-                className={`relative z-10 flex size-7 items-center justify-center rounded-full text-xs font-semibold ${complete ? "bg-emerald-600 text-white" : active ? "bg-primary text-white" : "bg-[#eef0ed] text-muted-foreground"}`}
+    <Card className="overflow-hidden border-0">
+      <CardContent className="overflow-x-auto px-4 py-3.5 lg:px-5">
+        <ol
+          aria-label={t.journeyLabel.replace("{step}", String(activeStage))}
+          className="grid min-w-[850px] grid-cols-6 gap-2"
+        >
+          {journeyStages.map((stage, index) => {
+            const note =
+              consultationNote === undefined
+                ? t.stageNotes[stage]
+                : stage === "consultation"
+                  ? consultationNote
+                  : "";
+            return (
+              <li
+                key={stage}
+                aria-current={index === activeStage - 1 ? "step" : undefined}
               >
-                {complete ? <Check className="size-3.5" /> : index + 1}
-              </span>
-              <span
-                className={`mt-2 text-xs ${active ? "font-semibold text-primary-hover" : "text-muted-foreground"}`}
-              >
-                {dictionary.students[key]}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </section>
+                <div
+                  className={cn(
+                    "flex min-h-14 items-center gap-2 rounded-full border border-transparent px-2.5 py-1.5",
+                    index === activeStage - 1 && "border-primary",
+                  )}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
+                      index < activeStage - 1
+                        ? "bg-emerald-700"
+                        : index === activeStage - 1
+                          ? "bg-primary"
+                          : "bg-neutral-500",
+                    )}
+                  >
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p
+                      className={cn(
+                        "text-sm font-semibold leading-5",
+                        index >= activeStage && "text-muted-foreground",
+                      )}
+                    >
+                      {t.stages[stage]}
+                    </p>
+                    {note && (
+                      <p
+                        className={cn(
+                          "text-xs leading-4",
+                          index < activeStage - 1
+                            ? "text-emerald-700 dark:text-emerald-300"
+                            : index === activeStage - 1
+                              ? "text-primary-hover"
+                              : "text-muted-foreground",
+                        )}
+                      >
+                        {note}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </CardContent>
+    </Card>
   );
 }

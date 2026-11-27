@@ -11,7 +11,6 @@ export type MockUser = {
   username: string;
   initials: string;
   role: MockUserRole;
-  destination: "/" | "/admin";
 };
 
 export const mockUsers: MockUser[] = [
@@ -22,7 +21,6 @@ export const mockUsers: MockUser[] = [
     username: "May Zin",
     initials: "MZ",
     role: "counselor",
-    destination: "/",
   },
   {
     id: "admin-aye-chan",
@@ -31,7 +29,6 @@ export const mockUsers: MockUser[] = [
     username: "Aye Darli",
     initials: "AD",
     role: "admin",
-    destination: "/admin",
   },
 ];
 

@@ -1,196 +1,185 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronRight } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import Link from "next/link";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import {
+  ActorBadge,
+  OwnerAvatar,
+} from "@/features/students/components/StudentStatus";
+import { dateLabel } from "@/features/students/lib/student-workflow";
+import type { Student } from "@/features/students/types/student";
+import { useLocale } from "@/providers/locale-provider";
+import { cn } from "@/lib/utils";
 
-import type { Dictionary, Locale } from "@/common/i18n/dictionaries";
-import { Pagination } from "@/common/components/Pagination";
-import { Text } from "@/components/ui/typography";
-import type { Student, StudentHealth } from "@/features/students/types/student";
-
-const healthStyles: Record<StudentHealth, string> = {
-  atRisk: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300",
-  needsAttention:
-    "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
-  onTrack:
-    "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-};
+const cell =
+  "block min-w-0 p-0 leading-5 xl:table-cell xl:px-2 xl:py-3.5 xl:first:pl-5 xl:last:pr-5";
+const caption = "mt-0.5 text-xs leading-normal text-muted-foreground";
 
 export function StudentsTable({
-  dictionary,
-  locale,
   students,
+  resetKey,
 }: {
-  dictionary: Dictionary;
-  locale: Locale;
   students: Student[];
+  resetKey: string;
 }) {
-  const router = useRouter();
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;
-  const totalStudents = 42;
-  const totalPages = Math.ceil(totalStudents / pageSize);
-  const firstStudent = (currentPage - 1) * pageSize + 1;
-  const lastStudent = Math.min(currentPage * pageSize, totalStudents);
+  const { dictionary, locale } = useLocale();
+  const t = dictionary.studentWorkspace;
+  const columns = useMemo(() => {
+    const columns: DataTableColumn<Student>[] = [
+      {
+        id: "student",
+        header: t.columns.student,
+        meta: { width: "20.25%", cellClassName: "row-start-1" },
+        cell: ({ row: { original: student } }) => (
+          <>
+            <Link
+              href={"/students/" + student.id}
+              className="rounded-sm font-semibold hover:text-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {student.name}
+            </Link>
+            <p className={caption}>{t.contacts[student.contact]}</p>
+          </>
+        ),
+      },
+      {
+        id: "school",
+        header: t.columns.school,
+        meta: { width: "20.9%", cellClassName: "col-span-2 row-start-2" },
+        cell: ({ row: { original: student } }) => (
+          <>
+            <p className="font-medium wrap-anywhere">
+              {student.school === "Kunjang University College"
+                ? "Kunjang Univ. College"
+                : student.school || t.intake.notDecided}
+            </p>
+            <p className={caption}>
+              {dateLabel(student.start, locale, t.today, t.noDate, true)}
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "journey",
+        header: t.columns.journey,
+        meta: { width: "12.9%", cellClassName: "col-span-2 row-start-3" },
+        cell: ({ row: { original: student } }) => {
+          const label = t.journeyLabel.replace(
+            "{step}",
+            String(student.journeyStep),
+          );
+          return (
+            <>
+              <div
+                role="img"
+                aria-label={label}
+                className="grid max-w-29 grid-cols-6 gap-1"
+              >
+                {Array.from({ length: 6 }, (_, index) => (
+                  <span
+                    key={index}
+                    className={cn(
+                      "h-1.5 rounded-full",
+                      index < student.journeyStep
+                        ? "bg-emerald-700"
+                        : "bg-[#d9d9e0] dark:bg-border",
+                    )}
+                  />
+                ))}
+              </div>
+              <p className={caption} aria-hidden="true">
+                {label}
+              </p>
+            </>
+          );
+        },
+      },
+      {
+        id: "now",
+        header: t.columns.now,
+        meta: { width: "17.5%", cellClassName: "col-span-2 row-start-4" },
+        cell: ({ row: { original: student } }) => (
+          <>
+            <p className="font-semibold wrap-anywhere">
+              {student.now === "custom"
+                ? student.customAction
+                : t.now[student.now].title}
+            </p>
+            <p
+              className={cn(
+                caption,
+                (student.now === "mofa" || student.turn === "noOne") &&
+                  "text-destructive",
+              )}
+            >
+              {student.intake && student.now === "none"
+                ? t.intake.statuses[student.intake.consultation.status]
+                : t.now[student.now].detail}
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "turn",
+        header: t.columns.turn,
+        meta: {
+          width: "10.3%",
+          cellClassName:
+            "row-start-5 self-center [&_[data-slot=badge]]:rounded-full [&_[data-slot=badge]]:text-xs",
+        },
+        cell: ({ row }) => <ActorBadge actor={row.original.turn} />,
+      },
+      {
+        id: "nextCheck",
+        header: t.columns.nextCheck,
+        meta: {
+          width: "10.3%",
+          cellClassName:
+            "col-start-2 row-start-5 self-center text-right whitespace-nowrap font-semibold xl:text-left",
+        },
+        cell: ({ row: { original: student } }) => (
+          <span className={cn(!student.nextCheck && "text-destructive")}>
+            {dateLabel(student.nextCheck, locale, t.today, t.noDate)}
+          </span>
+        ),
+      },
+      {
+        id: "owner",
+        header: t.columns.owner,
+        meta: {
+          cellClassName:
+            "col-start-2 row-start-1 justify-self-end [&>span]:size-7 [&>span]:text-xs",
+        },
+        cell: ({ row }) => <OwnerAvatar owner={row.original.owner} />,
+      },
+    ];
+
+    return columns.map((column) => ({
+      ...column,
+      meta: {
+        ...column.meta,
+        headerClassName: cn(
+          "wrap-anywhere xl:table-cell xl:px-2 xl:py-3 xl:first:pl-5 xl:last:pr-5",
+          column.id === "student"
+            ? "block px-5 py-3"
+            : "sr-only p-0 xl:not-sr-only",
+        ),
+        cellClassName: cn(cell, column.meta?.cellClassName),
+      },
+    }));
+  }, [locale, t]);
 
   return (
-    <section className="surface overflow-hidden">
-      <div className="overflow-x-auto px-3 sm:px-5">
-        <table className="w-full min-w-[70rem] border-collapse text-left">
-          <thead>
-            <tr className="border-b border-border text-[11px] font-semibold uppercase text-[#626a63]">
-              <th className="w-[18%] px-2 py-5">
-                {dictionary.students.student}
-              </th>
-              <th className="w-[19%] px-2 py-5">
-                {dictionary.students.publishedPlan}
-              </th>
-              <th className="w-[15%] px-2 py-5">
-                {dictionary.students.stageSupport}
-              </th>
-              <th className="w-[20%] px-2 py-5">
-                {dictionary.students.currentAction}
-              </th>
-              <th className="w-[11%] px-2 py-5">
-                {dictionary.students.actorOwner}
-              </th>
-              <th className="w-[9%] px-2 py-5">
-                {dictionary.students.deadline}
-              </th>
-              <th className="px-2 py-5">{dictionary.students.health}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map((student, index) => (
-              <tr
-                aria-label={`${dictionary.students.student}: ${student.name}`}
-                className={`group cursor-pointer border-b border-border outline-none last:border-0 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${index === 0 ? "bg-primary-tint/70" : "hover:bg-muted/50"}`}
-                key={student.id}
-                onClick={() => router.push(`/students/${student.id}`)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ")
-                    router.push(`/students/${student.id}`);
-                }}
-                role="link"
-                tabIndex={0}
-              >
-                <td className="relative px-2 py-4">
-                  {index === 0 && (
-                    <span className="absolute inset-y-2 -left-0 w-1 rounded-full bg-primary" />
-                  )}
-                  <div className="flex items-center gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-tint text-xs font-semibold text-primary-hover">
-                      {student.initials}
-                    </span>
-                    <div>
-                      <Text className="font-semibold">{student.name}</Text>
-                      <Text variant="caption" className="mt-0.5">
-                        {student.id}
-                      </Text>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-2 py-4">
-                  <Text className="font-semibold text-primary-hover">
-                    {student.plan}
-                  </Text>
-                  <Text variant="caption" className="mt-1">
-                    {student.school}
-                  </Text>
-                </td>
-                <td className="px-2 py-4">
-                  <span className="inline-flex rounded-full bg-primary-tint px-3 py-1 text-xs font-semibold text-primary-hover">
-                    {
-                      dictionary.students[
-                        student.stage as keyof typeof dictionary.students
-                      ]
-                    }
-                  </span>
-                  <Text variant="caption" className="mt-2">
-                    {dictionary.students[student.support]}
-                  </Text>
-                </td>
-                <td className="px-2 py-4">
-                  <Text className="font-semibold">{student.action}</Text>
-                </td>
-                <td className="px-2 py-4">
-                  <Text>{student.actor}</Text>
-                  <Text
-                    variant="caption"
-                    className={`mt-1 ${student.unclaimed ? "font-semibold text-destructive" : ""}`}
-                  >
-                    {student.unclaimed
-                      ? dictionary.students.notClaimed
-                      : (student.owner ?? dictionary.students.ownerNA)}
-                  </Text>
-                </td>
-                <td className="px-2 py-4">
-                  <Text
-                    className={
-                      student.deadline <= getCurrentIsoDate()
-                        ? "font-semibold text-destructive"
-                        : "font-semibold"
-                    }
-                  >
-                    {formatDeadline(dictionary, locale, student.deadline)}
-                  </Text>
-                </td>
-                <td className="px-2 py-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${healthStyles[student.health]}`}
-                    >
-                      {dictionary.students[student.health]}
-                    </span>
-                    <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {students.length === 0 ? (
-        <Text className="px-6 py-14 text-center" variant="description">
-          {dictionary.students.noResults}
-        </Text>
-      ) : (
-        <footer className="flex flex-col gap-4 border-t border-border px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <Text className="text-sm font-medium" variant="caption">
-            {dictionary.students.showing
-              .replace("{start}", String(firstStudent))
-              .replace("{end}", String(lastStudent))
-              .replace("{total}", "42")}
-          </Text>
-          <Pagination
-            currentPage={currentPage}
-            nextLabel={dictionary.students.nextPage}
-            onPageChange={setCurrentPage}
-            paginationLabel={dictionary.students.pagination}
-            previousLabel={dictionary.students.previousPage}
-            totalPages={totalPages}
-          />
-        </footer>
-      )}
-    </section>
+    <DataTable
+      columns={columns}
+      data={students}
+      resetKey={resetKey}
+      label={t.title}
+      empty={t.empty}
+      tableClassName="block table-fixed text-[15px] xl:table xl:[&>tbody]:table-row-group"
+      headerClassName="sticky top-0 z-10 block bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))] xl:table-header-group"
+      rowClassName="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 px-5 py-3.5 xl:table-row xl:p-0"
+    />
   );
-}
-
-function formatDeadline(
-  dictionary: Dictionary,
-  locale: Locale,
-  deadline: Student["deadline"],
-) {
-  if (deadline === getCurrentIsoDate()) return dictionary.students.today;
-  return new Intl.DateTimeFormat(locale === "my" ? "my-MM" : "en-US", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  }).format(new Date(`${deadline}T00:00:00Z`));
-}
-
-function getCurrentIsoDate() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }

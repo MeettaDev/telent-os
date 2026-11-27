@@ -1,33 +1,27 @@
-import { Text } from "@/components/ui/typography";
 import type { Dictionary } from "@/common/i18n/dictionaries";
+import { Card, CardContent } from "@/components/ui/card";
+import { todayMetrics } from "@/features/dashboard/mocks/my-work-data";
 
 export function SummaryMetrics({ dictionary }: { dictionary: Dictionary }) {
-  const metrics = [
-    [dictionary.dashboard.dueToday, 7],
-    [dictionary.dashboard.waitingStudent, 12],
-    [dictionary.dashboard.reviewsReturned, 3],
-    [dictionary.dashboard.casesAtRisk, 5],
-  ] as const;
   return (
     <section
-      aria-label="Workspace summary"
-      className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
+      aria-label={dictionary.today.summaryLabel}
+      className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"
     >
-      {metrics.map(([label, value]) => (
-        <article
-          className="surface group px-5 pb-5 pt-[1.15rem] transition-colors hover:border-primary/30 xl:px-6 xl:pb-6"
-          key={label}
+      {todayMetrics.map(({ id, count }) => (
+        <Card
+          key={id}
+          className="border-0 shadow-[0_8px_24px_rgba(25,25,30,0.08)] dark:shadow-none"
         >
-          <Text
-            variant="caption"
-            className="font-semibold uppercase tracking-[0.025em] text-[#616a62] dark:text-muted-foreground"
-          >
-            {label}
-          </Text>
-          <p className="mt-3 text-[2rem] font-semibold tabular-nums tracking-[-0.045em]">
-            {value}
-          </p>
-        </article>
+          <CardContent className="grid min-h-22 place-content-center gap-0.5 p-3 text-center">
+            <h2 className="text-sm font-semibold text-muted-foreground">
+              {dictionary.today.metrics[id].label}
+            </h2>
+            <p className="text-[2rem] leading-tight font-bold tabular-nums">
+              {count}
+            </p>
+          </CardContent>
+        </Card>
       ))}
     </section>
   );

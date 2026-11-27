@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Languages, LogOut, MoreHorizontal } from "lucide-react";
+import { Languages, LogOut, Moon, MoreHorizontal, Sun } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { clearActiveMockUser, useMockUser } from "@/common/auth/mock-auth";
@@ -19,10 +19,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Text } from "@/components/ui/typography";
 import { useLocale } from "@/providers/locale-provider";
+import { useTheme } from "@/providers/theme-provider";
 
 type UserProfileMenuProps = {
   align?: "start" | "center" | "end";
-  trigger?: "avatar" | "options";
+  trigger?: "avatar" | "options" | "profile";
 };
 
 export function UserProfileMenu({
@@ -32,6 +33,7 @@ export function UserProfileMenu({
   const router = useRouter();
   const user = useMockUser();
   const { dictionary, locale, setLocale } = useLocale();
+  const { theme, toggleTheme } = useTheme();
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -47,7 +49,26 @@ export function UserProfileMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          {trigger === "avatar" ? (
+          {trigger === "profile" ? (
+            <button
+              aria-label={dictionary.sidebar.profileMenu}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-xl bg-muted/50 p-3 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              type="button"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-base font-semibold text-primary-foreground">
+                {user.initials}
+              </span>
+              <span className="min-w-0">
+                <span className="block break-words text-sm font-semibold">
+                  {user.username}
+                </span>
+                <span className="block text-xs leading-relaxed text-muted-foreground">
+                  {dictionary.sidebar.yangon} ·{" "}
+                  {locale === "en" ? "English" : "မြန်မာ"}
+                </span>
+              </span>
+            </button>
+          ) : trigger === "avatar" ? (
             <button
               aria-label={dictionary.sidebar.profileMenu}
               className="flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary-tint transition-colors hover:bg-primary-tint/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -95,6 +116,13 @@ export function UserProfileMenu({
               မြန်မာ
             </DropdownMenuCheckboxItem>
           </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={toggleTheme}>
+            {theme === "light" ? <Moon /> : <Sun />}
+            {theme === "light"
+              ? dictionary.dashboard.switchToDark
+              : dictionary.dashboard.switchToLight}
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => setIsLogoutOpen(true)}

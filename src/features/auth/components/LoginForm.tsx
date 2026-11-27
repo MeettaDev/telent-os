@@ -37,7 +37,7 @@ export function LoginForm() {
     await new Promise((resolve) => window.setTimeout(resolve, 700));
     setActiveMockUser(user);
     setSuccessFlashToast(dictionary.auth.loginSuccess);
-    router.replace(user.destination);
+    router.replace("/");
   }
 
   return (
